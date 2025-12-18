@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Isometric Tile Puzzle</title>
+		<style>
+			html,
+			body {
+				height: 100%;
+				margin: 0;
+				overflow: hidden;
+				background: #0f1115;
+			}
+			#ui {
+				position: fixed;
+				left: 12px;
+				top: 12px;
+				color: #e8edf7;
+				font-family: system-ui, -apple-system, Segoe UI, Roboto,
+					sans-serif;
+				background: rgba(0, 0, 0, 0.35);
+				padding: 10px 12px;
+				border-radius: 10px;
+				backdrop-filter: blur(6px);
+				user-select: none;
+			}
+			#toast {
+				position: fixed;
+				left: 50%;
+				top: 24px;
+				transform: translateX(-50%);
+				color: #0f1115;
+				font-weight: 700;
+				background: #e8edf7;
+				padding: 10px 14px;
+				border-radius: 999px;
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="ui">
+			<div><b>조작</b>: WASD (한 칸 이동)</div>
+			<div>목표: Start(초록) → Goal(노랑)</div>
+		</div>
+		<div id="toast">CLEAR!</div>
+
+		<script type="module" src="./src/main.js"></script>
+	</body>
+</html>

@@ -41,15 +41,26 @@ function createGame() {
 	const { scene, renderer, camera } = createThreeCore();
 	const level = createLevel(scene, map, colorMap);
 	const player = createPlayer(scene, level);
+
+	// 초기 플레이어 색상: white
+	let playerColor = "white";
 	player.mesh.material.color.set(PLAYER_COLORS.white);
 
-	// 초기 방향: 출발 타일 주변의 이동 가능한 방향을 찾아 설정
+	// 방향 인덱스 → 이동 벡터
+	const dirToDelta = [
+		{ dx: 0, dy: -1 }, // 북
+		{ dx: 1, dy: 0 }, // 동
+		{ dx: 0, dy: 1 }, // 남
+		{ dx: -1, dy: 0 }, // 서
+	];
+
+	// 초기 방향 설정 (이동 가능한 인접 타일을 바라봄)
 	function setInitialDirection() {
 		const dirs = [
-			{ dx: 1, dy: 0, dir: 1 }, // 우 → 동
-			{ dx: 0, dy: 1, dir: 2 }, // 아래 → 남
-			{ dx: -1, dy: 0, dir: 3 }, // 좌 → 서
-			{ dx: 0, dy: -1, dir: 0 }, // 위 → 북
+			{ dx: 1, dy: 0, dir: 1 },
+			{ dx: 0, dy: 1, dir: 2 },
+			{ dx: -1, dy: 0, dir: 3 },
+			{ dx: 0, dy: -1, dir: 0 },
 		];
 		for (const { dx, dy, dir } of dirs) {
 			const nx = level.start.x + dx;
@@ -59,18 +70,9 @@ function createGame() {
 				return;
 			}
 		}
-		// fallback to default
 		player.setDirection(0);
 	}
 	setInitialDirection();
-
-	// 방향 인덱스 → 이동 벡터
-	const dirToDelta = [
-		{ dx: 0, dy: -1 },
-		{ dx: 1, dy: 0 },
-		{ dx: 0, dy: 1 },
-		{ dx: -1, dy: 0 },
-	];
 
 	// 카메라 컨트롤
 	const controls = new OrbitControls(camera, renderer.domElement);
@@ -87,7 +89,7 @@ function createGame() {
 	};
 	controls.update();
 
-	// 마우스 팬 상태 추적
+	// 마우스 팬 상태
 	let isPanning = false;
 	renderer.domElement.addEventListener("pointerdown", (e) => {
 		if (e.button === 0) {
@@ -117,10 +119,10 @@ function createGame() {
 		toast.style.display = v ? "block" : "none";
 	}
 
-	// 이동 색상 (흰색은 회전 버튼이므로 제외)
+	// 현재 선택된 이동 색상 (흰색 제외)
 	let selectedColor = "red";
 
-	// 하이라이트 재질 생성
+	// 하이라이트 재질
 	const highlightMaterials = {};
 	for (const name in COLOR_VALUES) {
 		const baseColor = new THREE.Color(COLOR_VALUES[name]);
@@ -158,18 +160,20 @@ function createGame() {
 		}
 	}
 
-	// 색상/회전 버튼 처리
+	// 색상/회전 버튼 이벤트
 	document.querySelectorAll(".color-btn").forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const color = btn.getAttribute("data-color");
 			if (color === "white") {
-				// 흰색 버튼은 회전 + 캐릭터 색상도 흰색
+				// 흰색 버튼은 회전만 하고 캐릭터 색도 흰색으로
 				player.turnClockwise();
+				playerColor = "white";
 				player.mesh.material.color.set(PLAYER_COLORS.white);
 				highlightAheadTile();
 			} else {
-				// 이동 색상 변경
+				// 이동 색상 선택
 				selectedColor = color;
+				playerColor = color;
 				player.mesh.material.color.set(
 					PLAYER_COLORS[color] || PLAYER_COLORS.white
 				);
@@ -178,7 +182,7 @@ function createGame() {
 		});
 	});
 
-	// 속도 조절 슬라이더
+	// 속도 슬라이더
 	const speedSlider = document.getElementById("speedSlider");
 	const baseMoveInterval = 0.6;
 	const baseRotateInterval = 0.4;
@@ -195,11 +199,12 @@ function createGame() {
 
 	const clock = new THREE.Clock();
 	function update(dt) {
+		// 목표 기둥 회전
 		if (level.goalMesh) level.goalMesh.rotation.y += dt * 0.8;
-		// 업데이트 이동 애니메이션
-		const finishedMove = player.update(dt);
+		// 플레이어 이동 업데이트
+		player.update(dt);
 
-		// 타이머 누적
+		// 타이머 증가
 		if (!cleared) {
 			if (!player.state.isMoving) {
 				timeSinceLastMove += dt;
@@ -207,12 +212,13 @@ function createGame() {
 			}
 		}
 
-		// 자동 이동 (색 버튼일 때만) -> moveInterval
+		// 자동 이동 (선택 색상과 플레이어 색상이 일치할 때만)
 		if (!player.state.isMoving && !cleared) {
 			if (
-				selectedColor === "red" ||
-				selectedColor === "yellow" ||
-				selectedColor === "blue"
+				(selectedColor === "red" ||
+					selectedColor === "yellow" ||
+					selectedColor === "blue") &&
+				playerColor === selectedColor
 			) {
 				if (timeSinceLastMove >= moveInterval) {
 					const dirIdx = player.state.dir;
@@ -221,7 +227,6 @@ function createGame() {
 					const ny = player.state.gy + dy;
 					if (level.canWalk(nx, ny)) {
 						const tileColor = level.colorMap[ny][nx] || "gray";
-						// 목표(회색)도 항상 이동 가능
 						if (
 							tileColor === selectedColor ||
 							tileColor === "gray"
@@ -236,12 +241,12 @@ function createGame() {
 			}
 		}
 
-		// 목표 도달 확인
+		// 목표 도달 체크
 		if (!cleared && level.map[player.state.gy][player.state.gx] === 3) {
 			setCleared(true);
 		}
 
-		// 카메라 중심에 플레이어 유지
+		// 카메라 중심을 플레이어 위치에 맞춤 (마우스 팬 중이면 유지)
 		if (!isPanning) {
 			controls.target.copy(player.mesh.position);
 		}
@@ -254,8 +259,8 @@ function createGame() {
 	function restart() {
 		setCleared(false);
 		player.reset();
-		// 기본 이동 색상은 빨간색
 		selectedColor = "red";
+		playerColor = "red";
 		player.mesh.material.color.set(PLAYER_COLORS.red);
 		clearHighlight();
 		timeSinceLastMove = 0;

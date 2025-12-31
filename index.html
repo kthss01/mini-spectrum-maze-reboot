@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Isometric Tile Puzzle</title>
 
 		<script type="importmap">
 			{
@@ -13,7 +14,6 @@
 			}
 		</script>
 
-		<title>Isometric Tile Puzzle</title>
 		<style>
 			html,
 			body {
@@ -47,7 +47,7 @@
 				border-radius: 999px;
 				display: none;
 			}
-			/* index.html의 <style> 태그 내 스타일 추가 */
+			/* Camera reset button */
 			#resetCam {
 				margin-top: 6px;
 				padding: 6px 10px;
@@ -60,6 +60,31 @@
 			#resetCam:hover {
 				background: rgba(255, 255, 255, 0.25);
 			}
+			/* Color buttons */
+			#color-buttons {
+				margin-top: 10px;
+				display: flex;
+				gap: 6px;
+			}
+			.color-btn {
+				width: 28px;
+				height: 28px;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			.color-btn[data-color="gray"] {
+				background: #1e2430;
+			}
+			.color-btn[data-color="red"] {
+				background: #d95763;
+			}
+			.color-btn[data-color="yellow"] {
+				background: #ffd35c;
+			}
+			.color-btn[data-color="blue"] {
+				background: #5090e7;
+			}
 		</style>
 	</head>
 	<body>
@@ -67,11 +92,31 @@
 			<div><b>조작</b>: WASD (한 칸 이동)</div>
 			<div>목표: Start(초록) → Goal(노랑)</div>
 			<button id="resetCam">Reset Camera</button>
-			<!-- 카메라 리셋 버튼 추가 -->
+			<div id="color-buttons">
+				<!-- Gray: 모든 길 보이기 -->
+				<button
+					class="color-btn"
+					data-color="gray"
+					title="모든 길 표시"
+				></button>
+				<button
+					class="color-btn"
+					data-color="red"
+					title="빨간 길 선택"
+				></button>
+				<button
+					class="color-btn"
+					data-color="yellow"
+					title="노란 길 선택"
+				></button>
+				<button
+					class="color-btn"
+					data-color="blue"
+					title="파란 길 선택"
+				></button>
+			</div>
 		</div>
-
 		<div id="toast">CLEAR!</div>
-
 		<script type="module" src="./src/main.js"></script>
 	</body>
 </html>

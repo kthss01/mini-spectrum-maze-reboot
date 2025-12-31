@@ -1,4 +1,5 @@
 import * as THREE from "https://unpkg.com/three@0.161.0/build/three.module.js";
+import { OrbitControls } from "https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js";
 
 // 기존 LEVEL 정의 대신 미로 크기와 생성 함수 추가
 // DFS로 만든 미로를 LEVEL로 사용
@@ -92,6 +93,8 @@ const LEVEL = generateMaze(MAZE_WIDTH, MAZE_HEIGHT);
 const { viewSize, radius } = computeCameraSettings(LEVEL);
 CFG.viewSize = viewSize;
 CFG.radius = radius;
+
+let controls; // 전역 변수로 선언하여 reset 버튼에서 접근 가능
 
 /**
  * =========================================================
@@ -230,20 +233,13 @@ function createLevel(scene, map) {
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
 			const v = map[y][x];
-			const p = gridToWorld(x, y);
-
-			// floor everywhere
-			const floor = new THREE.Mesh(floorGeo, floorMat);
-			floor.position.set(p.x, -CFG.floorH * 0.5, p.z);
-			floor.receiveShadow = true;
-			group.add(floor);
-
-			if (v === 1) {
-				const wall = new THREE.Mesh(wallGeo, wallMat);
-				wall.position.set(p.x, CFG.wallH * 0.5, p.z);
-				wall.castShadow = true;
-				wall.receiveShadow = true;
-				group.add(wall);
+			if (v !== 1) {
+				// 길(0), 시작(2), 목표(3)인 경우에만 바닥을 생성
+				const p = gridToWorld(x, y);
+				const floor = new THREE.Mesh(floorGeo, floorMat);
+				floor.position.set(p.x, -CFG.floorH * 0.5, p.z);
+				floor.receiveShadow = true;
+				group.add(floor);
 			}
 		}
 	}
@@ -409,8 +405,33 @@ function createGame() {
 	const level = createLevel(scene, LEVEL);
 	const player = createPlayer(scene, level);
 
-	const clock = new THREE.Clock();
+	// OrbitControls 설정
+	controls = new OrbitControls(camera, renderer.domElement);
+	controls.enableRotate = false; // 회전 비활성화
+	controls.enablePan = true; // 우클릭 팬 가능
+	controls.enableZoom = true; // 스크롤 줌 가능
+	controls.mouseButtons = {
+		LEFT: THREE.MOUSE.ROTATE, // 기본 왼쪽 버튼은 비워두거나 rotate에 할당
+		MIDDLE: THREE.MOUSE.DOLLY,
+		RIGHT: THREE.MOUSE.PAN,
+	};
+	controls.screenSpacePanning = true;
+	controls.minZoom = 0.5;
+	controls.maxZoom = 4;
+	controls.update();
 
+	// 우클릭 메뉴 방지
+	window.addEventListener("contextmenu", (e) => e.preventDefault());
+
+	// Reset 버튼 이벤트 등록
+	const resetBtn = document.getElementById("resetCam");
+	if (resetBtn) {
+		resetBtn.addEventListener("click", () => {
+			controls.reset();
+		});
+	}
+
+	const clock = new THREE.Clock();
 	let cleared = false;
 
 	function setCleared(v) {

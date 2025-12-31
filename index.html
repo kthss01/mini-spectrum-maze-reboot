@@ -37,13 +37,29 @@
 				border-radius: 999px;
 				display: none;
 			}
+			/* index.html의 <style> 태그 내 스타일 추가 */
+			#resetCam {
+				margin-top: 6px;
+				padding: 6px 10px;
+				background: rgba(255, 255, 255, 0.15);
+				color: #e8edf7;
+				border: none;
+				border-radius: 6px;
+				cursor: pointer;
+			}
+			#resetCam:hover {
+				background: rgba(255, 255, 255, 0.25);
+			}
 		</style>
 	</head>
 	<body>
 		<div id="ui">
 			<div><b>조작</b>: WASD (한 칸 이동)</div>
 			<div>목표: Start(초록) → Goal(노랑)</div>
+			<button id="resetCam">Reset Camera</button>
+			<!-- 카메라 리셋 버튼 추가 -->
 		</div>
+
 		<div id="toast">CLEAR!</div>
 
 		<script type="module" src="./src/main.js"></script>

@@ -37,12 +37,12 @@ function createGame() {
 	CFG.viewSize = viewSize;
 	CFG.radius = radius;
 
-	// 씬 구성
+	// 씬/렌더러/카메라 초기화
 	const { scene, renderer, camera } = createThreeCore();
 	const level = createLevel(scene, map, colorMap);
 	const player = createPlayer(scene, level);
 
-	// 초기 플레이어 색상: white
+	// 초기 플레이어 색상과 방향
 	let playerColor = "white";
 	player.mesh.material.color.set(PLAYER_COLORS.white);
 
@@ -54,7 +54,7 @@ function createGame() {
 		{ dx: -1, dy: 0 }, // 서
 	];
 
-	// 초기 방향 설정 (이동 가능한 인접 타일을 바라봄)
+	// 초기 방향 (이동 가능한 첫 번째 방향)
 	function setInitialDirection() {
 		const dirs = [
 			{ dx: 1, dy: 0, dir: 1 },
@@ -74,35 +74,22 @@ function createGame() {
 	}
 	setInitialDirection();
 
-	// 카메라 컨트롤
+	// 카메라 컨트롤 (Pan 비활성화, Zoom만 활성화)
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableRotate = false;
-	controls.enablePan = true;
+	controls.enablePan = false; // ← Pan을 비활성화
 	controls.enableZoom = true;
 	controls.screenSpacePanning = true;
 	controls.minZoom = 0.5;
 	controls.maxZoom = 4;
 	controls.mouseButtons = {
-		LEFT: THREE.MOUSE.PAN,
+		LEFT: THREE.MOUSE.PAN, // 하지만 enablePan = false이므로 동작 안함
 		MIDDLE: THREE.MOUSE.DOLLY,
 		RIGHT: THREE.MOUSE.ROTATE,
 	};
 	controls.update();
 
-	// 마우스 팬 상태
-	let isPanning = false;
-	renderer.domElement.addEventListener("pointerdown", (e) => {
-		if (e.button === 0) {
-			isPanning = true;
-		}
-	});
-	renderer.domElement.addEventListener("pointerup", (e) => {
-		if (e.button === 0) {
-			isPanning = false;
-			controls.target.copy(player.mesh.position);
-			controls.update();
-		}
-	});
+	// 마우스 팬 이벤트 제거 (이제 필요 없음)
 	window.addEventListener("contextmenu", (e) => e.preventDefault());
 
 	const toast = document.getElementById("toast");
@@ -119,10 +106,10 @@ function createGame() {
 		toast.style.display = v ? "block" : "none";
 	}
 
-	// 현재 선택된 이동 색상 (흰색 제외)
+	// 선택된 이동 색상 (흰색 제외)
 	let selectedColor = "red";
 
-	// 하이라이트 재질
+	// 하이라이트 재질 생성
 	const highlightMaterials = {};
 	for (const name in COLOR_VALUES) {
 		const baseColor = new THREE.Color(COLOR_VALUES[name]);
@@ -165,7 +152,7 @@ function createGame() {
 		btn.addEventListener("click", () => {
 			const color = btn.getAttribute("data-color");
 			if (color === "white") {
-				// 흰색 버튼은 회전만 하고 캐릭터 색도 흰색으로
+				// 흰색 버튼 → 회전만 하고 색도 흰색
 				player.turnClockwise();
 				playerColor = "white";
 				player.mesh.material.color.set(PLAYER_COLORS.white);
@@ -197,11 +184,13 @@ function createGame() {
 	let timeSinceLastMove = 0;
 	let timeSinceLastRotate = 0;
 
+	// 매 프레임 갱신
 	const clock = new THREE.Clock();
 	function update(dt) {
 		// 목표 기둥 회전
 		if (level.goalMesh) level.goalMesh.rotation.y += dt * 0.8;
-		// 플레이어 이동 업데이트
+
+		// 캐릭터 이동
 		player.update(dt);
 
 		// 타이머 증가
@@ -212,13 +201,13 @@ function createGame() {
 			}
 		}
 
-		// 자동 이동 (선택 색상과 플레이어 색상이 일치할 때만)
+		// 이동 색상과 플레이어 색상이 일치할 때만 자동 전진
 		if (!player.state.isMoving && !cleared) {
 			if (
+				playerColor === selectedColor &&
 				(selectedColor === "red" ||
 					selectedColor === "yellow" ||
-					selectedColor === "blue") &&
-				playerColor === selectedColor
+					selectedColor === "blue")
 			) {
 				if (timeSinceLastMove >= moveInterval) {
 					const dirIdx = player.state.dir;
@@ -246,10 +235,8 @@ function createGame() {
 			setCleared(true);
 		}
 
-		// 카메라 중심을 플레이어 위치에 맞춤 (마우스 팬 중이면 유지)
-		if (!isPanning) {
-			controls.target.copy(player.mesh.position);
-		}
+		// 카메라를 플레이어 위치로 항상 고정
+		controls.target.copy(player.mesh.position);
 		controls.update();
 
 		// 다음 타일 하이라이트

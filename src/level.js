@@ -36,7 +36,7 @@ export function createLevel(scene, map, colorMap) {
 	const start = findTile(2) ?? { x: 1, y: 1 };
 	const goal = findTile(3) ?? { x: cols - 2, y: rows - 2 };
 
-	// 바닥색 재질 미리 생성
+	// 색상별 재질 미리 생성
 	const floorMats = {};
 	for (const name in COLOR_VALUES) {
 		floorMats[name] = new THREE.MeshStandardMaterial({
@@ -47,7 +47,7 @@ export function createLevel(scene, map, colorMap) {
 	}
 
 	// 기둥 높이를 크게 설정하여 하단이 보이지 않도록
-	const pillarHeight = CFG.tile * rows * 2; // 맵 크기에 비례해 충분히 긴 기둥
+	const pillarHeight = CFG.tile * rows * 2;
 
 	const topGeo = new THREE.BoxGeometry(CFG.tile, CFG.floorH, CFG.tile);
 	const pillarGeo = new THREE.BoxGeometry(CFG.tile, pillarHeight, CFG.tile);
@@ -61,17 +61,18 @@ export function createLevel(scene, map, colorMap) {
 				const p = gridToWorld(x, y);
 				const colorName = colorMap[y][x] ?? "gray";
 				const topMat = floorMats[colorName] || floorMats.gray;
-				const pillarMat = new THREE.MeshStandardMaterial({
-					color: COLOR_VALUES.gray, // 기둥 측면을 회색 계열로
-					roughness: 0.8,
-					metalness: 0.0,
-				});
 
 				// 상단 타일 부분
 				const topMesh = new THREE.Mesh(topGeo, topMat);
 				topMesh.position.set(p.x, -CFG.floorH * 0.5, p.z);
 				topMesh.receiveShadow = true;
-				// 하단 기둥
+
+				// 하단 기둥 부분: 타일 색과 동일한 색상 사용
+				const pillarMat = new THREE.MeshStandardMaterial({
+					color: COLOR_VALUES[colorName] || COLOR_VALUES.gray,
+					roughness: 0.8,
+					metalness: 0.0,
+				});
 				const pillarMesh = new THREE.Mesh(pillarGeo, pillarMat);
 				pillarMesh.position.set(
 					p.x,
@@ -81,7 +82,7 @@ export function createLevel(scene, map, colorMap) {
 				pillarMesh.castShadow = true;
 				pillarMesh.receiveShadow = true;
 
-				// userData 설정 (상단 타일과 기둥을 함께 관리)
+				// userData 설정 (상단 타일)
 				topMesh.userData.color = colorName;
 				topMesh.userData.gridX = x;
 				topMesh.userData.gridY = y;
@@ -94,7 +95,7 @@ export function createLevel(scene, map, colorMap) {
 		}
 	}
 
-	// 시작/목표 마커 (색상 변경: 시작 흰색, 목표 회색)
+	// 시작/목표 마커 (start: white, goal: gray)
 	const startMat = new THREE.MeshStandardMaterial({
 		color: 0xffffff,
 		roughness: 0.6,
@@ -120,7 +121,7 @@ export function createLevel(scene, map, colorMap) {
 	addMarkerTile(start.x, start.y, startMat);
 	addMarkerTile(goal.x, goal.y, goalMat);
 
-	// Goal 기둥 (회색)
+	// 목표 기둥 (gray)
 	const goalPillarGeo = new THREE.CylinderGeometry(
 		CFG.tile * 0.18,
 		CFG.tile * 0.18,

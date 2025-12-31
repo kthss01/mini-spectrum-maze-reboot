@@ -10,10 +10,13 @@ export function createPlayer(scene, level) {
 		CFG.tile * 0.45
 	);
 	const playerMat = new THREE.MeshStandardMaterial({
-		color: PLAYER_COLORS.white,
+		color: PLAYER_COLORS.white, // 초기 색상
 		roughness: 0.5,
 		metalness: 0.0,
 	});
+	// 하이라이트를 위한 emissive 색상 설정
+	playerMat.emissive = new THREE.Color(0xffffff);
+	playerMat.emissiveIntensity = 0.4;
 
 	const mesh = new THREE.Mesh(playerGeo, playerMat);
 	mesh.castShadow = true;
@@ -26,7 +29,7 @@ export function createPlayer(scene, level) {
 		t: 0,
 		from: new THREE.Vector3(),
 		to: new THREE.Vector3(),
-		dir: 0, // 0: 북, 1: 동, 2: 남, 3: 서
+		dir: 0,
 	};
 
 	function snapToGrid() {

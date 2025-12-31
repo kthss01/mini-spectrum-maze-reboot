@@ -48,18 +48,6 @@
 				border-radius: 999px;
 				display: none;
 			}
-			#resetCam {
-				margin-top: 6px;
-				padding: 6px 10px;
-				background: rgba(255, 255, 255, 0.15);
-				color: #e8edf7;
-				border: none;
-				border-radius: 6px;
-				cursor: pointer;
-			}
-			#resetCam:hover {
-				background: rgba(255, 255, 255, 0.25);
-			}
 			#color-buttons {
 				margin-top: 10px;
 				display: flex;
@@ -72,11 +60,6 @@
 				border-radius: 4px;
 				cursor: pointer;
 			}
-			/* 흰색 버튼은 회전 기능 */
-			.color-btn[data-color="white"] {
-				background: #ffffff;
-				border: 1px solid #cccccc;
-			}
 			.color-btn[data-color="red"] {
 				background: #d95763;
 			}
@@ -85,6 +68,47 @@
 			}
 			.color-btn[data-color="blue"] {
 				background: #5090e7;
+			}
+			#direction-buttons {
+				margin-top: 12px;
+				position: relative;
+				width: 80px;
+				height: 80px;
+			}
+			.arrow-btn {
+				position: absolute;
+				width: 28px;
+				height: 28px;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				background: rgba(255, 255, 255, 0.2);
+				color: #e8edf7;
+				font-size: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			/* 방향 버튼 위치와 회전 (아이소메트릭에 맞춰 대각선 방향) */
+			.dir-north {
+				top: 0;
+				left: 0;
+				transform: rotate(-45deg);
+			}
+			.dir-east {
+				top: 0;
+				right: 0;
+				transform: rotate(45deg);
+			}
+			.dir-south {
+				bottom: 0;
+				right: 0;
+				transform: rotate(135deg);
+			}
+			.dir-west {
+				bottom: 0;
+				left: 0;
+				transform: rotate(225deg);
 			}
 			#speedContainer {
 				margin-top: 8px;
@@ -97,18 +121,13 @@
 	<body>
 		<div id="ui">
 			<div>
-				<b>조작</b>: 흰색 버튼 → 한 번 회전, 나머지 색 → 한 칸 전진 / R
-				키: 다시 시작
+				<b>조작</b>: 색 선택(red/yellow/blue) → 전진 / 화살표 버튼 →
+				방향 회전 / R 키: 다시 시작
 			</div>
 			<div>목표: Start(흰색) → Goal(회색)</div>
-			<button id="resetCam">Reset Camera</button>
+
+			<!-- 이동 색상 버튼 -->
 			<div id="color-buttons">
-				<!-- 흰색 버튼은 회전 명령 -->
-				<button
-					class="color-btn"
-					data-color="white"
-					title="회전(흰색)"
-				></button>
 				<button
 					class="color-btn"
 					data-color="red"
@@ -125,6 +144,16 @@
 					title="파란색"
 				></button>
 			</div>
+
+			<!-- 방향 전환 버튼 (아이소메트릭 방향에 맞춰 4개) -->
+			<div id="direction-buttons">
+				<button class="arrow-btn dir-north" data-dir="0">▲</button>
+				<button class="arrow-btn dir-east" data-dir="1">▲</button>
+				<button class="arrow-btn dir-south" data-dir="2">▲</button>
+				<button class="arrow-btn dir-west" data-dir="3">▲</button>
+			</div>
+
+			<!-- 속도 조절 슬라이더 -->
 			<div id="speedContainer">
 				<label for="speedSlider">Speed:</label>
 				<input

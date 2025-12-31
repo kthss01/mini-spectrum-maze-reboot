@@ -57,7 +57,6 @@
 			#resetCam:hover {
 				background: rgba(255, 255, 255, 0.25);
 			}
-			/* Color buttons */
 			#color-buttons {
 				margin-top: 10px;
 				display: flex;
@@ -70,8 +69,9 @@
 				border-radius: 4px;
 				cursor: pointer;
 			}
-			.color-btn[data-color="gray"] {
-				background: #1e2430;
+			.color-btn[data-color="white"] {
+				background: #ffffff;
+				border: 1px solid #cccccc;
 			}
 			.color-btn[data-color="red"] {
 				background: #d95763;
@@ -86,34 +86,35 @@
 	</head>
 	<body>
 		<div id="ui">
-			<div><b>조작</b>: WASD (한 칸 이동)</div>
-			<div>목표: Start(초록) → Goal(노랑)</div>
+			<div>
+				<b>조작</b>: 색 선택 → 매 프레임 이동/회전 / R 키: 다시 시작
+			</div>
+			<div>목표: Start(흰색) → Goal(검정색)</div>
 			<button id="resetCam">Reset Camera</button>
 			<div id="color-buttons">
 				<button
 					class="color-btn"
-					data-color="gray"
-					title="모든 길 표시"
+					data-color="white"
+					title="흰색"
 				></button>
 				<button
 					class="color-btn"
 					data-color="red"
-					title="빨간 길 선택"
+					title="빨간색"
 				></button>
 				<button
 					class="color-btn"
 					data-color="yellow"
-					title="노란 길 선택"
+					title="노란색"
 				></button>
 				<button
 					class="color-btn"
 					data-color="blue"
-					title="파란 길 선택"
+					title="파란색"
 				></button>
 			</div>
 		</div>
 		<div id="toast">CLEAR!</div>
-		<!-- main.js 대신 game.js를 로드 -->
 		<script type="module" src="./src/game.js"></script>
 	</body>
 </html>

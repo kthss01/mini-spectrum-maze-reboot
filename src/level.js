@@ -61,20 +61,23 @@ export function createLevel(scene, map, colorMap) {
 				floor.position.set(p.x, -CFG.floorH * 0.5, p.z);
 				floor.receiveShadow = true;
 				floor.userData.color = colorName;
+				floor.userData.gridX = x;
+				floor.userData.gridY = y;
+				floor.userData.originalMaterial = mat;
 				floors.push(floor);
 				group.add(floor);
 			}
 		}
 	}
 
-	// 시작/도착 마커와 목표 기둥
+	// 시작/도착 마커와 목표 기둥 색상 설정
 	const startMat = new THREE.MeshStandardMaterial({
-		color: 0x48d597,
+		color: 0xffffff, // 시작 타일은 흰색
 		roughness: 0.6,
 		metalness: 0.0,
 	});
 	const goalMat = new THREE.MeshStandardMaterial({
-		color: 0xffd35c,
+		color: 0x000000, // 목표 타일은 검정색
 		roughness: 0.6,
 		metalness: 0.0,
 	});

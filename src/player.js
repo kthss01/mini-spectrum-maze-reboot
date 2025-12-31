@@ -10,7 +10,7 @@ export function createPlayer(scene, level) {
 		CFG.tile * 0.45
 	);
 	const playerMat = new THREE.MeshStandardMaterial({
-		color: PLAYER_COLORS.gray,
+		color: PLAYER_COLORS.white,
 		roughness: 0.5,
 		metalness: 0.0,
 	});
@@ -26,11 +26,22 @@ export function createPlayer(scene, level) {
 		t: 0,
 		from: new THREE.Vector3(),
 		to: new THREE.Vector3(),
+		dir: 0, // 0: 북, 1: 동, 2: 남, 3: 서
 	};
 
 	function snapToGrid() {
 		const p = level.gridToWorld(state.gx, state.gy);
 		mesh.position.set(p.x, CFG.playerY, p.z);
+	}
+
+	function setDirection(newDir) {
+		state.dir = ((newDir % 4) + 4) % 4;
+		// 방향에 따라 Y축 회전 (0→0°, 1→90°, 2→180°, 3→270°)
+		mesh.rotation.y = state.dir * (Math.PI / 2);
+	}
+
+	function turnClockwise() {
+		setDirection(state.dir + 1);
 	}
 
 	function beginMoveTo(nx, ny) {
@@ -69,9 +80,20 @@ export function createPlayer(scene, level) {
 		state.gx = level.start.x;
 		state.gy = level.start.y;
 		state.isMoving = false;
+		state.t = 0;
 		snapToGrid();
+		setDirection(0);
 	}
 
 	snapToGrid();
-	return { mesh, state, tryMove, update, reset };
+	setDirection(0);
+	return {
+		mesh,
+		state,
+		tryMove,
+		update,
+		reset,
+		setDirection,
+		turnClockwise,
+	};
 }

@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.161.0/build/three.module.js";
+import * as THREE from "three";
 import { CFG, PLAYER_COLORS } from "./config.js";
 import { easeInOut } from "./utils.js";
 
@@ -36,7 +36,6 @@ export function createPlayer(scene, level) {
 
 	function setDirection(newDir) {
 		state.dir = ((newDir % 4) + 4) % 4;
-		// 방향에 따라 Y축 회전 (0→0°, 1→90°, 2→180°, 3→270°)
 		mesh.rotation.y = state.dir * (Math.PI / 2);
 	}
 

@@ -40,15 +40,46 @@ export function generateMaze(width, height) {
 	return maze;
 }
 
-// 통로(0), 시작(2), 목표(3) 타일에 색상 지정 (무작위)
+// 무작위 색상 배정을 일정한 그룹 단위로 수행
 export function assignTileColors(map) {
-	return map.map((row) =>
-		row.map((v) => {
-			if (v === 1) return null;
-			if (v === 2 || v === 3) return "gray";
-			// COLORS[0]은 gray이므로 제외하고 random
-			const idx = 1 + Math.floor(Math.random() * (COLORS.length - 1));
-			return COLORS[idx];
-		})
-	);
+	const rows = map.length;
+	const cols = map[0].length;
+	const colorMap = Array.from({ length: rows }, () => Array(cols).fill(null));
+	const availableColors = ["red", "yellow", "blue"];
+
+	for (let y = 0; y < rows; y++) {
+		for (let x = 0; x < cols; x++) {
+			if (map[y][x] !== 1) {
+				let chosenColor = null;
+				// 왼쪽 이웃이 같은 지점일 경우 색상 유지 가능
+				if (
+					x > 0 &&
+					map[y][x - 1] !== 1 &&
+					colorMap[y][x - 1] &&
+					Math.random() < 0.7
+				) {
+					chosenColor = colorMap[y][x - 1];
+				}
+				// 위쪽 이웃이 같은 지점일 경우 색상 유지 가능
+				if (
+					y > 0 &&
+					map[y - 1][x] !== 1 &&
+					colorMap[y - 1][x] &&
+					!chosenColor &&
+					Math.random() < 0.7
+				) {
+					chosenColor = colorMap[y - 1][x];
+				}
+				// 결정되지 않았다면 무작위 색상
+				if (!chosenColor) {
+					chosenColor =
+						availableColors[
+							Math.floor(Math.random() * availableColors.length)
+						];
+				}
+				colorMap[y][x] = chosenColor;
+			}
+		}
+	}
+	return colorMap;
 }

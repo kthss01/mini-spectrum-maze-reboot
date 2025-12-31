@@ -10,8 +10,10 @@ export const CFG = {
 	radius: 40,
 };
 
-export const COLORS = ["gray", "red", "yellow", "blue"]; // 무작위 배정용 색상 (흰/검 제외)
+// 무작위 색상 목록 (흰/검 제외)
+export const COLORS = ["gray", "red", "yellow", "blue"];
 
+// 타일 색상 값
 export const COLOR_VALUES = {
 	gray: 0x1e2430,
 	red: 0xd95763,
@@ -21,6 +23,7 @@ export const COLOR_VALUES = {
 	black: 0x000000,
 };
 
+// 플레이어 색상
 export const PLAYER_COLORS = {
 	gray: 0xe8edf7,
 	red: 0xd95763,

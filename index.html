@@ -4,6 +4,8 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<title>Isometric Tile Puzzle</title>
+
+		<!-- Import map for Three.js modules -->
 		<script type="importmap">
 			{
 				"imports": {
@@ -12,6 +14,7 @@
 				}
 			}
 		</script>
+
 		<style>
 			html,
 			body {
@@ -69,6 +72,7 @@
 				border-radius: 4px;
 				cursor: pointer;
 			}
+			/* 흰색 버튼은 회전 기능 */
 			.color-btn[data-color="white"] {
 				background: #ffffff;
 				border: 1px solid #cccccc;
@@ -82,20 +86,28 @@
 			.color-btn[data-color="blue"] {
 				background: #5090e7;
 			}
+			#speedContainer {
+				margin-top: 8px;
+			}
+			#speedSlider {
+				width: 100%;
+			}
 		</style>
 	</head>
 	<body>
 		<div id="ui">
 			<div>
-				<b>조작</b>: 색 선택 → 매 프레임 이동/회전 / R 키: 다시 시작
+				<b>조작</b>: 흰색 버튼 → 한 번 회전, 나머지 색 → 한 칸 전진 / R
+				키: 다시 시작
 			</div>
-			<div>목표: Start(흰색) → Goal(검정색)</div>
+			<div>목표: Start(흰색) → Goal(회색)</div>
 			<button id="resetCam">Reset Camera</button>
 			<div id="color-buttons">
+				<!-- 흰색 버튼은 회전 명령 -->
 				<button
 					class="color-btn"
 					data-color="white"
-					title="흰색"
+					title="회전(흰색)"
 				></button>
 				<button
 					class="color-btn"
@@ -112,6 +124,17 @@
 					data-color="blue"
 					title="파란색"
 				></button>
+			</div>
+			<div id="speedContainer">
+				<label for="speedSlider">Speed:</label>
+				<input
+					type="range"
+					id="speedSlider"
+					min="0.2"
+					max="2.0"
+					step="0.1"
+					value="1"
+				/>
 			</div>
 		</div>
 		<div id="toast">CLEAR!</div>

@@ -1,8 +1,21 @@
 import * as THREE from "https://unpkg.com/three@0.161.0/build/three.module.js";
 
 // 기존 LEVEL 정의 대신 미로 크기와 생성 함수 추가
-const MAZE_WIDTH = 15; // 반드시 홀수 (타일 단위)
-const MAZE_HEIGHT = 11; // 반드시 홀수 (타일 단위)
+// DFS로 만든 미로를 LEVEL로 사용
+const MAZE_WIDTH = 31; // 반드시 홀수 (타일 단위)
+const MAZE_HEIGHT = 33; // 반드시 홀수 (타일 단위)
+
+// 기존 CFG에 radius 기본값을 추가
+const CFG = {
+	viewSize: 18,
+	zoom: 1.25,
+	tile: 2.2,
+	wallH: 2.4,
+	floorH: 0.4,
+	playerY: 0.6,
+	moveDuration: 0.18,
+	radius: 40, // 기본값
+};
 
 /**
  * DFS 백트래커로 미로 생성
@@ -60,18 +73,25 @@ function generateMaze(width, height) {
 	return maze;
 }
 
-// DFS로 만든 미로를 LEVEL로 사용
-const LEVEL = generateMaze(MAZE_WIDTH, MAZE_HEIGHT);
+/**
+ * 미로 크기에 따라 카메라 viewSize와 radius를 계산
+ * map: 2D 배열 LEVEL
+ */
+function computeCameraSettings(map) {
+	const rows = map.length;
+	const cols = map[0].length;
+	const maxDim = Math.max(rows, cols);
+	// 미로가 클수록 카메라 뷰를 넓게 설정
+	const viewSize = maxDim * CFG.tile * 0.6;
+	const radius = maxDim * CFG.tile * 1.4;
+	return { viewSize, radius };
+}
 
-const CFG = {
-	viewSize: 18, // ortho view size
-	zoom: 1.25,
-	tile: 2.2,
-	wallH: 2.4,
-	floorH: 0.4,
-	playerY: 0.6,
-	moveDuration: 0.18,
-};
+// 미로 생성 후 동적 카메라 설정 적용
+const LEVEL = generateMaze(MAZE_WIDTH, MAZE_HEIGHT);
+const { viewSize, radius } = computeCameraSettings(LEVEL);
+CFG.viewSize = viewSize;
+CFG.radius = radius;
 
 /**
  * =========================================================
@@ -97,7 +117,7 @@ function createThreeCore() {
 	renderer.shadowMap.enabled = true;
 	document.body.appendChild(renderer.domElement);
 
-	// Lights
+	// Lights 설정은 그대로 유지...
 	scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 	const dir = new THREE.DirectionalLight(0xffffff, 0.95);
 	dir.position.set(20, 30, 10);
@@ -105,13 +125,13 @@ function createThreeCore() {
 	dir.shadow.mapSize.set(1024, 1024);
 	scene.add(dir);
 
-	// Camera (Orthographic Isometric)
+	// 카메라 생성 및 동적 설정
 	const camera = new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 200);
 	camera.zoom = CFG.zoom;
 
 	function updateCamera() {
 		const aspect = window.innerWidth / window.innerHeight;
-		const v = CFG.viewSize;
+		const v = CFG.viewSize; // 동적으로 설정된 viewSize 사용
 
 		camera.left = -v * aspect;
 		camera.right = v * aspect;
@@ -120,25 +140,23 @@ function createThreeCore() {
 
 		const yaw = THREE.MathUtils.degToRad(45);
 		const pitch = THREE.MathUtils.degToRad(35.264);
-		const radius = 40;
+		const r = CFG.radius; // 동적으로 계산된 radius 사용
 
 		camera.position.set(
-			radius * Math.cos(yaw) * Math.cos(pitch),
-			radius * Math.sin(pitch),
-			radius * Math.sin(yaw) * Math.cos(pitch)
+			r * Math.cos(yaw) * Math.cos(pitch),
+			r * Math.sin(pitch),
+			r * Math.sin(yaw) * Math.cos(pitch)
 		);
 		camera.lookAt(0, 0, 0);
 		camera.updateProjectionMatrix();
 	}
 
 	updateCamera();
-
-	function handleResize() {
+	window.addEventListener("resize", () => {
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 		updateCamera();
-	}
-	window.addEventListener("resize", handleResize);
+	});
 
 	return { scene, renderer, camera };
 }

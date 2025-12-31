@@ -1,12 +1,11 @@
 import * as THREE from "https://unpkg.com/three@0.161.0/build/three.module.js";
 import { OrbitControls } from "https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js";
 
-// 기존 LEVEL 정의 대신 미로 크기와 생성 함수 추가
-// DFS로 만든 미로를 LEVEL로 사용
+// 미로 크기 설정 (홀수)
 const MAZE_WIDTH = 31; // 반드시 홀수 (타일 단위)
 const MAZE_HEIGHT = 33; // 반드시 홀수 (타일 단위)
 
-// 기존 CFG에 radius 기본값을 추가
+// 게임 설정 (CFG)
 const CFG = {
 	viewSize: 18,
 	zoom: 1.25,
@@ -15,7 +14,7 @@ const CFG = {
 	floorH: 0.4,
 	playerY: 0.6,
 	moveDuration: 0.18,
-	radius: 40, // 기본값
+	radius: 40, // 기본값, 이후 동적으로 재설정됨
 };
 
 /**
@@ -24,27 +23,23 @@ const CFG = {
  * 0=길, 1=벽, 2=시작, 3=목표
  */
 function generateMaze(width, height) {
-	// 모든 위치를 벽(1)으로 초기화
 	const maze = Array.from({ length: height }, () => Array(width).fill(1));
-	// 스택과 시작 좌표 (1,1)에서 시작
 	const stack = [];
 	maze[1][1] = 0;
 	stack.push([1, 1]);
 
 	const directions = [
-		[0, -2], // 위로 두 칸
-		[2, 0], // 오른쪽으로 두 칸
-		[0, 2], // 아래로 두 칸
-		[-2, 0], // 왼쪽으로 두 칸
+		[0, -2],
+		[2, 0],
+		[0, 2],
+		[-2, 0],
 	];
 
 	while (stack.length > 0) {
 		const [x, y] = stack[stack.length - 1];
-		// 방문하지 않은 인접 셀 목록 생성
 		const neighbors = directions
 			.map(([dx, dy]) => [x + dx, y + dy, x + dx / 2, y + dy / 2])
 			.filter(([nx, ny]) => {
-				// 범위를 벗어나지 않고, 아직 벽(1)인 경우
 				return (
 					nx > 0 &&
 					ny > 0 &&
@@ -55,22 +50,19 @@ function generateMaze(width, height) {
 			});
 
 		if (neighbors.length > 0) {
-			// 랜덤한 이웃 선택
 			const [nx, ny, wx, wy] =
 				neighbors[Math.floor(Math.random() * neighbors.length)];
-			// 선택한 셀을 길로 만들고, 그 사이의 벽도 허물기
 			maze[ny][nx] = 0;
 			maze[wy][wx] = 0;
 			stack.push([nx, ny]);
 		} else {
-			// 막다른 길이면 스택을 되돌아감
 			stack.pop();
 		}
 	}
 
 	// 시작점과 도착점 지정
-	maze[1][1] = 2; // 시작
-	maze[height - 2][width - 2] = 3; // 목표
+	maze[1][1] = 2;
+	maze[height - 2][width - 2] = 3;
 	return maze;
 }
 
@@ -82,7 +74,6 @@ function computeCameraSettings(map) {
 	const rows = map.length;
 	const cols = map[0].length;
 	const maxDim = Math.max(rows, cols);
-	// 미로가 클수록 카메라 뷰를 넓게 설정
 	const viewSize = maxDim * CFG.tile * 0.6;
 	const radius = maxDim * CFG.tile * 1.4;
 	return { viewSize, radius };
@@ -94,21 +85,17 @@ const { viewSize, radius } = computeCameraSettings(LEVEL);
 CFG.viewSize = viewSize;
 CFG.radius = radius;
 
-let controls; // 전역 변수로 선언하여 reset 버튼에서 접근 가능
+let controls; // OrbitControls 인스턴스
 
 /**
- * =========================================================
- * UTIL
- * =========================================================
+ * 완만한 easing 함수
  */
 function easeInOut(t) {
 	return t * t * (3 - 2 * t);
 }
 
 /**
- * =========================================================
  * THREE CORE (scene/renderer/camera/lights)
- * =========================================================
  */
 function createThreeCore() {
 	const scene = new THREE.Scene();
@@ -120,7 +107,7 @@ function createThreeCore() {
 	renderer.shadowMap.enabled = true;
 	document.body.appendChild(renderer.domElement);
 
-	// Lights 설정은 그대로 유지...
+	// Lights
 	scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 	const dir = new THREE.DirectionalLight(0xffffff, 0.95);
 	dir.position.set(20, 30, 10);
@@ -128,13 +115,13 @@ function createThreeCore() {
 	dir.shadow.mapSize.set(1024, 1024);
 	scene.add(dir);
 
-	// 카메라 생성 및 동적 설정
+	// 카메라 생성
 	const camera = new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 200);
 	camera.zoom = CFG.zoom;
 
 	function updateCamera() {
 		const aspect = window.innerWidth / window.innerHeight;
-		const v = CFG.viewSize; // 동적으로 설정된 viewSize 사용
+		const v = CFG.viewSize;
 
 		camera.left = -v * aspect;
 		camera.right = v * aspect;
@@ -143,7 +130,7 @@ function createThreeCore() {
 
 		const yaw = THREE.MathUtils.degToRad(45);
 		const pitch = THREE.MathUtils.degToRad(35.264);
-		const r = CFG.radius; // 동적으로 계산된 radius 사용
+		const r = CFG.radius;
 
 		camera.position.set(
 			r * Math.cos(yaw) * Math.cos(pitch),
@@ -165,9 +152,7 @@ function createThreeCore() {
 }
 
 /**
- * =========================================================
  * LEVEL (tile map -> meshes + helpers)
- * =========================================================
  */
 function createLevel(scene, map) {
 	const rows = map.length;
@@ -176,7 +161,6 @@ function createLevel(scene, map) {
 	const group = new THREE.Group();
 	scene.add(group);
 
-	// Center offsets
 	const offsetX = (cols - 1) * CFG.tile * 0.5;
 	const offsetZ = (rows - 1) * CFG.tile * 0.5;
 
@@ -204,14 +188,9 @@ function createLevel(scene, map) {
 	const start = findTile(2) ?? { x: 1, y: 1 };
 	const goal = findTile(3) ?? { x: cols - 2, y: rows - 2 };
 
-	// Materials / Geos
+	// Materials / geometries
 	const floorMat = new THREE.MeshStandardMaterial({
 		color: 0x1e2430,
-		roughness: 0.95,
-		metalness: 0.0,
-	});
-	const wallMat = new THREE.MeshStandardMaterial({
-		color: 0x2f394b,
 		roughness: 0.95,
 		metalness: 0.0,
 	});
@@ -227,14 +206,12 @@ function createLevel(scene, map) {
 	});
 
 	const floorGeo = new THREE.BoxGeometry(CFG.tile, CFG.floorH, CFG.tile);
-	const wallGeo = new THREE.BoxGeometry(CFG.tile, CFG.wallH, CFG.tile);
 
-	// Build tiles/walls
+	// Create only path tiles; wall tiles become 낭떠러지
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
 			const v = map[y][x];
 			if (v !== 1) {
-				// 길(0), 시작(2), 목표(3)인 경우에만 바닥을 생성
 				const p = gridToWorld(x, y);
 				const floor = new THREE.Mesh(floorGeo, floorMat);
 				floor.position.set(p.x, -CFG.floorH * 0.5, p.z);
@@ -286,9 +263,7 @@ function createLevel(scene, map) {
 }
 
 /**
- * =========================================================
  * PLAYER (grid state + move tween)
- * =========================================================
  */
 function createPlayer(scene, level) {
 	const playerGeo = new THREE.BoxGeometry(
@@ -334,27 +309,22 @@ function createPlayer(scene, level) {
 
 	function tryMove(dx, dy) {
 		if (state.isMoving) return false;
-
 		const nx = state.gx + dx;
 		const ny = state.gy + dy;
 		if (!level.canWalk(nx, ny)) return false;
-
 		beginMoveTo(nx, ny);
 		return true;
 	}
 
 	function update(dt) {
 		if (!state.isMoving) return false;
-
 		state.t += dt / CFG.moveDuration;
 		const a = Math.min(state.t, 1);
 		const eased = easeInOut(a);
-
 		mesh.position.lerpVectors(state.from, state.to, eased);
-
 		if (a >= 1) {
 			state.isMoving = false;
-			return true; // move finished this frame
+			return true;
 		}
 		return false;
 	}
@@ -367,14 +337,11 @@ function createPlayer(scene, level) {
 	}
 
 	snapToGrid();
-
 	return { mesh, state, tryMove, update, reset };
 }
 
 /**
- * =========================================================
  * INPUT (WASD)
- * =========================================================
  */
 function bindInput({ onMove, onRestart, isLocked }) {
 	function onKeyDown(e) {
@@ -389,14 +356,11 @@ function bindInput({ onMove, onRestart, isLocked }) {
 	}
 
 	window.addEventListener("keydown", onKeyDown);
-
 	return () => window.removeEventListener("keydown", onKeyDown);
 }
 
 /**
- * =========================================================
  * GAME
- * =========================================================
  */
 function createGame() {
 	const toast = document.getElementById("toast");
@@ -410,11 +374,6 @@ function createGame() {
 	controls.enableRotate = false; // 회전 비활성화
 	controls.enablePan = true; // 우클릭 팬 가능
 	controls.enableZoom = true; // 스크롤 줌 가능
-	controls.mouseButtons = {
-		LEFT: THREE.MOUSE.ROTATE, // 기본 왼쪽 버튼은 비워두거나 rotate에 할당
-		MIDDLE: THREE.MOUSE.DOLLY,
-		RIGHT: THREE.MOUSE.PAN,
-	};
 	controls.screenSpacePanning = true;
 	controls.minZoom = 0.5;
 	controls.maxZoom = 4;
@@ -457,9 +416,7 @@ function createGame() {
 	}
 
 	function update(dt) {
-		// simple goal animation
 		if (level.goalMesh) level.goalMesh.rotation.y += dt * 0.8;
-
 		const finishedMove = player.update(dt);
 		if (finishedMove && !cleared && checkClear()) {
 			setCleared(true);
@@ -470,6 +427,7 @@ function createGame() {
 		requestAnimationFrame(loop);
 		const dt = clock.getDelta();
 		update(dt);
+		controls.update(); // 컨트롤 상태 업데이트
 		renderer.render(scene, camera);
 	}
 

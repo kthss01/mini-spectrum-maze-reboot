@@ -4,7 +4,6 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<title>Isometric Tile Puzzle</title>
-
 		<script type="importmap">
 			{
 				"imports": {
@@ -13,7 +12,6 @@
 				}
 			}
 		</script>
-
 		<style>
 			html,
 			body {
@@ -47,7 +45,6 @@
 				border-radius: 999px;
 				display: none;
 			}
-			/* Camera reset button */
 			#resetCam {
 				margin-top: 6px;
 				padding: 6px 10px;
@@ -93,7 +90,6 @@
 			<div>목표: Start(초록) → Goal(노랑)</div>
 			<button id="resetCam">Reset Camera</button>
 			<div id="color-buttons">
-				<!-- Gray: 모든 길 보이기 -->
 				<button
 					class="color-btn"
 					data-color="gray"
@@ -117,6 +113,7 @@
 			</div>
 		</div>
 		<div id="toast">CLEAR!</div>
-		<script type="module" src="./src/main.js"></script>
+		<!-- main.js 대신 game.js를 로드 -->
+		<script type="module" src="./src/game.js"></script>
 	</body>
 </html>

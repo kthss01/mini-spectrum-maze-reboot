@@ -69,46 +69,47 @@
 			.color-btn[data-color="blue"] {
 				background: #5090e7;
 			}
+			/* 방향 버튼 레이아웃 */
 			#direction-buttons {
 				margin-top: 12px;
 				position: relative;
-				width: 80px;
-				height: 80px;
+				width: 100px;
+				height: 100px;
 			}
 			.arrow-btn {
-				position: absolute;
 				width: 28px;
 				height: 28px;
 				border: none;
 				border-radius: 4px;
-				cursor: pointer;
 				background: rgba(255, 255, 255, 0.2);
 				color: #e8edf7;
 				font-size: 20px;
 				display: flex;
 				align-items: center;
 				justify-content: center;
+				cursor: pointer;
+				position: absolute;
 			}
-			/* 방향 버튼 위치와 회전 (아이소메트릭에 맞춰 대각선 방향) */
+			/* 아이소메트릭 방향에 맞춘 위치와 회전 */
 			.dir-north {
 				top: 0;
-				left: 0;
-				transform: rotate(-45deg);
+				left: 50%;
+				transform: translateX(-50%) rotate(-45deg);
 			}
 			.dir-east {
-				top: 0;
+				top: 50%;
 				right: 0;
-				transform: rotate(45deg);
+				transform: translateY(-50%) rotate(45deg);
 			}
 			.dir-south {
 				bottom: 0;
-				right: 0;
-				transform: rotate(135deg);
+				left: 50%;
+				transform: translateX(-50%) rotate(135deg);
 			}
 			.dir-west {
-				bottom: 0;
+				top: 50%;
 				left: 0;
-				transform: rotate(225deg);
+				transform: translateY(-50%) rotate(225deg);
 			}
 			#speedContainer {
 				margin-top: 8px;
@@ -121,12 +122,12 @@
 	<body>
 		<div id="ui">
 			<div>
-				<b>조작</b>: 색 선택(red/yellow/blue) → 전진 / 화살표 버튼 →
+				<b>조작</b>: 색(red/yellow/blue) 선택 → 전진 / 화살표 버튼 →
 				방향 회전 / R 키: 다시 시작
 			</div>
 			<div>목표: Start(흰색) → Goal(회색)</div>
 
-			<!-- 이동 색상 버튼 -->
+			<!-- 이동 색상 선택 버튼 -->
 			<div id="color-buttons">
 				<button
 					class="color-btn"
@@ -145,11 +146,15 @@
 				></button>
 			</div>
 
-			<!-- 방향 전환 버튼 (아이소메트릭 방향에 맞춰 4개) -->
+			<!-- 방향 회전 버튼 (타일 방향과 일치하도록 배치) -->
 			<div id="direction-buttons">
+				<!-- 북 (NW) 방향: up-left -->
 				<button class="arrow-btn dir-north" data-dir="0">▲</button>
+				<!-- 동 (NE) 방향: up-right -->
 				<button class="arrow-btn dir-east" data-dir="1">▲</button>
+				<!-- 남 (SE) 방향: down-right -->
 				<button class="arrow-btn dir-south" data-dir="2">▲</button>
+				<!-- 서 (SW) 방향: down-left -->
 				<button class="arrow-btn dir-west" data-dir="3">▲</button>
 			</div>
 

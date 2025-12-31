@@ -1,18 +1,67 @@
 import * as THREE from "https://unpkg.com/three@0.161.0/build/three.module.js";
 
+// 기존 LEVEL 정의 대신 미로 크기와 생성 함수 추가
+const MAZE_WIDTH = 15; // 반드시 홀수 (타일 단위)
+const MAZE_HEIGHT = 11; // 반드시 홀수 (타일 단위)
+
 /**
- * =========================================================
- * CONFIG / LEVEL DATA
- * =========================================================
- * 0 = path, 1 = wall, 2 = start, 3 = goal
+ * DFS 백트래커로 미로 생성
+ * width, height는 타일 그리드 크기이며 홀수여야 합니다.
+ * 0=길, 1=벽, 2=시작, 3=목표
  */
-const LEVEL = [
-	[1, 1, 1, 1, 1, 1, 1],
-	[1, 2, 0, 0, 0, 3, 1],
-	[1, 0, 1, 1, 0, 0, 1],
-	[1, 0, 0, 0, 0, 0, 1],
-	[1, 1, 1, 1, 1, 1, 1],
-];
+function generateMaze(width, height) {
+	// 모든 위치를 벽(1)으로 초기화
+	const maze = Array.from({ length: height }, () => Array(width).fill(1));
+	// 스택과 시작 좌표 (1,1)에서 시작
+	const stack = [];
+	maze[1][1] = 0;
+	stack.push([1, 1]);
+
+	const directions = [
+		[0, -2], // 위로 두 칸
+		[2, 0], // 오른쪽으로 두 칸
+		[0, 2], // 아래로 두 칸
+		[-2, 0], // 왼쪽으로 두 칸
+	];
+
+	while (stack.length > 0) {
+		const [x, y] = stack[stack.length - 1];
+		// 방문하지 않은 인접 셀 목록 생성
+		const neighbors = directions
+			.map(([dx, dy]) => [x + dx, y + dy, x + dx / 2, y + dy / 2])
+			.filter(([nx, ny]) => {
+				// 범위를 벗어나지 않고, 아직 벽(1)인 경우
+				return (
+					nx > 0 &&
+					ny > 0 &&
+					nx < width - 1 &&
+					ny < height - 1 &&
+					maze[ny][nx] === 1
+				);
+			});
+
+		if (neighbors.length > 0) {
+			// 랜덤한 이웃 선택
+			const [nx, ny, wx, wy] =
+				neighbors[Math.floor(Math.random() * neighbors.length)];
+			// 선택한 셀을 길로 만들고, 그 사이의 벽도 허물기
+			maze[ny][nx] = 0;
+			maze[wy][wx] = 0;
+			stack.push([nx, ny]);
+		} else {
+			// 막다른 길이면 스택을 되돌아감
+			stack.pop();
+		}
+	}
+
+	// 시작점과 도착점 지정
+	maze[1][1] = 2; // 시작
+	maze[height - 2][width - 2] = 3; // 목표
+	return maze;
+}
+
+// DFS로 만든 미로를 LEVEL로 사용
+const LEVEL = generateMaze(MAZE_WIDTH, MAZE_HEIGHT);
 
 const CFG = {
 	viewSize: 18, // ortho view size

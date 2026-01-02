@@ -13,7 +13,7 @@ function createGame() {
 	const map = generateMaze(MAZE_WIDTH, MAZE_HEIGHT);
 	const colorMap = assignTileColors(map);
 
-	// 시작/목표 색 지정 (start: white, goal: gray)
+	// Find start and goal positions; assign colors
 	let startX = 1,
 		startY = 1,
 		goalX = MAZE_WIDTH - 2,
@@ -32,29 +32,34 @@ function createGame() {
 	colorMap[startY][startX] = "white";
 	colorMap[goalY][goalX] = "gray";
 
-	// 카메라 설정
+	// Set camera view
 	const { viewSize, radius } = computeCameraSettings(map);
 	CFG.viewSize = viewSize;
 	CFG.radius = radius;
 
-	// 씬/렌더러/카메라 생성
+	// Scene, renderer, camera
 	const { scene, renderer, camera } = createThreeCore();
 	const level = createLevel(scene, map, colorMap);
 	const player = createPlayer(scene, level);
 
-	// 플레이어 색상 관리
+	// Player color state and highlight
 	let playerColor = "white";
 	player.mesh.material.color.set(PLAYER_COLORS.white);
 
-	// 방향 인덱스 → 이동 벡터
+	// Add light effect: attach a point light to the player
+	const light = new THREE.PointLight(0xffffff, 0.6, CFG.tile * 5);
+	light.position.set(0, 1, 0);
+	player.mesh.add(light);
+
+	// Direction mapping (grid deltas)
 	const dirToDelta = [
-		{ dx: 0, dy: -1 }, // 북
-		{ dx: 1, dy: 0 }, // 동
-		{ dx: 0, dy: 1 }, // 남
-		{ dx: -1, dy: 0 }, // 서
+		{ dx: 0, dy: -1 },
+		{ dx: 1, dy: 0 },
+		{ dx: 0, dy: 1 },
+		{ dx: -1, dy: 0 },
 	];
 
-	// 초기 방향 설정 (인접 타일 중 첫 번째 이동 가능한 방향)
+	// Initialize facing direction toward first available neighbor
 	function setInitialDirection() {
 		const dirs = [
 			{ dx: 1, dy: 0, dir: 1 },
@@ -74,7 +79,7 @@ function createGame() {
 	}
 	setInitialDirection();
 
-	// 카메라 컨트롤 (Pan 비활성화, Zoom만 사용)
+	// OrbitControls: pan disabled, zoom enabled
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableRotate = false;
 	controls.enablePan = false;
@@ -84,9 +89,7 @@ function createGame() {
 	controls.maxZoom = 4;
 	controls.update();
 
-	// 우클릭 메뉴 비활성화
 	window.addEventListener("contextmenu", (e) => e.preventDefault());
-
 	const toast = document.getElementById("toast");
 
 	let cleared = false;
@@ -95,14 +98,14 @@ function createGame() {
 		toast.style.display = v ? "block" : "none";
 	}
 
-	// 이동 색상 선택 (white 제외)
+	// Movement color selection
 	let selectedColor = "red";
 
-	// 하이라이트 재질
+	// Highlight materials for next tile
 	const highlightMaterials = {};
 	for (const name in COLOR_VALUES) {
-		const baseColor = new THREE.Color(COLOR_VALUES[name]);
-		const hlColor = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.4);
+		const base = new THREE.Color(COLOR_VALUES[name]);
+		const hlColor = base.clone().lerp(new THREE.Color(0xffffff), 0.4);
 		highlightMaterials[name] = new THREE.MeshStandardMaterial({
 			color: hlColor.getHex(),
 			roughness: 0.4,
@@ -136,20 +139,27 @@ function createGame() {
 		}
 	}
 
-	// 이동 색상 버튼 (red/yellow/blue) 클릭
+	// Color animation variables
+	let colorStart = null;
+	let colorTarget = null;
+	let colorAnimationStart = null;
+	const colorAnimationDuration = 0.4; // seconds
+
+	// Color buttons (red/yellow/blue) click handler
 	document.querySelectorAll(".color-btn").forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const color = btn.getAttribute("data-color");
 			selectedColor = color;
 			playerColor = color;
-			player.mesh.material.color.set(
-				PLAYER_COLORS[color] || PLAYER_COLORS.white
-			);
+			// Setup color animation
+			colorStart = player.mesh.material.color.clone();
+			colorTarget = new THREE.Color(PLAYER_COLORS[color]);
+			colorAnimationStart = performance.now();
 			highlightAheadTile();
 		});
 	});
 
-	// 방향 버튼 (dir-north/east/south/west) 클릭 → 회전
+	// Direction buttons click handler: rotate character
 	document.querySelectorAll(".arrow-btn").forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const dir = parseInt(btn.getAttribute("data-dir"));
@@ -158,7 +168,7 @@ function createGame() {
 		});
 	});
 
-	// 속도 슬라이더
+	// Speed slider
 	const speedSlider = document.getElementById("speedSlider");
 	const baseMoveInterval = 0.6;
 	let moveInterval = baseMoveInterval * parseFloat(speedSlider.value);
@@ -171,9 +181,20 @@ function createGame() {
 
 	const clock = new THREE.Clock();
 	function update(dt) {
-		// 목표 기둥 회전
+		// Update goal pillar rotation
 		if (level.goalMesh) level.goalMesh.rotation.y += dt * 0.8;
 
+		// Color animation interpolation
+		if (colorAnimationStart !== null) {
+			const elapsed = performance.now() - colorAnimationStart;
+			const t = Math.min(elapsed / (colorAnimationDuration * 1000), 1);
+			player.mesh.material.color.copy(colorStart).lerp(colorTarget, t);
+			if (t >= 1) {
+				colorAnimationStart = null;
+			}
+		}
+
+		// Update player movement
 		player.update(dt);
 
 		if (!cleared) {
@@ -182,7 +203,7 @@ function createGame() {
 			}
 		}
 
-		// 이동 조건: 캐릭터 색상 = 선택 색상, 시간 간격 충족
+		// Move forward when player's color matches selected color
 		if (!player.state.isMoving && !cleared) {
 			if (
 				playerColor === selectedColor &&
@@ -211,16 +232,16 @@ function createGame() {
 			}
 		}
 
-		// 목표 도달 확인
+		// Check goal
 		if (!cleared && level.map[player.state.gy][player.state.gx] === 3) {
 			setCleared(true);
 		}
 
-		// 카메라를 항상 플레이어에 맞춤 (Pan 비활성화)
+		// Always center camera on player (pan disabled)
 		controls.target.copy(player.mesh.position);
 		controls.update();
 
-		// 다음 타일 하이라이트
+		// Highlight next tile
 		highlightAheadTile();
 	}
 
@@ -229,13 +250,16 @@ function createGame() {
 		player.reset();
 		selectedColor = "red";
 		playerColor = "red";
-		player.mesh.material.color.set(PLAYER_COLORS.red);
+		// Reset color animation
+		colorStart = player.mesh.material.color.clone();
+		colorTarget = new THREE.Color(PLAYER_COLORS.red);
+		colorAnimationStart = performance.now();
 		clearHighlight();
 		timeSinceLastMove = 0;
 		highlightAheadTile();
 	}
 
-	// 키보드 R 키로 다시 시작
+	// R key resets
 	bindInput({
 		isLocked: () => cleared || player.state.isMoving,
 		onMove: () => {},

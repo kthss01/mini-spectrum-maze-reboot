@@ -171,10 +171,14 @@ function createGame() {
 	// Speed slider
 	const speedSlider = document.getElementById("speedSlider");
 	const baseMoveInterval = 0.6;
+	const baseMoveDuration = 0.18; // 기본 애니메이션 지속시간(초)
 	let moveInterval = baseMoveInterval * parseFloat(speedSlider.value);
+	CFG.moveDuration = baseMoveDuration * parseFloat(speedSlider.value);
+
 	speedSlider.addEventListener("input", () => {
 		const val = parseFloat(speedSlider.value);
 		moveInterval = baseMoveInterval * val;
+		CFG.moveDuration = baseMoveDuration * val;
 	});
 
 	let timeSinceLastMove = 0;
@@ -259,11 +263,14 @@ function createGame() {
 		highlightAheadTile();
 	}
 
-	// R key resets
 	bindInput({
 		isLocked: () => cleared || player.state.isMoving,
 		onMove: () => {},
 		onRestart: restart,
+		onRotate: (dir) => {
+			player.setDirection(dir);
+			highlightAheadTile();
+		},
 	});
 
 	function loop() {

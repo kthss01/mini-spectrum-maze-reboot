@@ -1,10 +1,19 @@
-// WASD 이동 제거, R키만 재시작 처리
-export function bindInput({ onMove, onRestart, isLocked }) {
+// WASD 방향 회전 + R 키 재시작 입력 처리
+export function bindInput({ onMove, onRestart, isLocked, onRotate }) {
 	function onKeyDown(e) {
 		const k = e.key.toLowerCase();
 		if (isLocked()) return;
-		// 이동 키는 무시, R키만 재시작
-		if (k === "r") onRestart();
+		if (k === "w") {
+			onRotate && onRotate(0); // 북쪽
+		} else if (k === "d") {
+			onRotate && onRotate(1); // 동쪽
+		} else if (k === "s") {
+			onRotate && onRotate(2); // 남쪽
+		} else if (k === "a") {
+			onRotate && onRotate(3); // 서쪽
+		} else if (k === "r") {
+			onRestart && onRestart();
+		}
 	}
 	window.addEventListener("keydown", onKeyDown);
 	return () => window.removeEventListener("keydown", onKeyDown);

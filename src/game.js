@@ -13,7 +13,7 @@ function createGame() {
 	const map = generateMaze(MAZE_WIDTH, MAZE_HEIGHT);
 	const colorMap = assignTileColors(map);
 
-	// 시작/목표 위치 찾아 색상 지정
+	// 시작/목표 위치 지정 및 색상 설정
 	let startX = 1,
 		startY = 1,
 		goalX = MAZE_WIDTH - 2,
@@ -32,26 +32,25 @@ function createGame() {
 	colorMap[startY][startX] = "white";
 	colorMap[goalY][goalX] = "gray";
 
-	// 카메라 설정
 	const { viewSize, radius } = computeCameraSettings(map);
 	CFG.viewSize = viewSize;
 	CFG.radius = radius;
 
-	// 씬, 렌더러, 카메라 초기화
+	// 씬/렌더러/카메라 초기화
 	const { scene, renderer, camera } = createThreeCore();
 	const level = createLevel(scene, map, colorMap);
 	const player = createPlayer(scene, level);
 
-	// 플레이어 색상 관리
+	// 플레이어 색상 상태
 	let playerColor = "white";
 	player.mesh.material.color.set(PLAYER_COLORS.white);
 
-	// 빛 효과 추가
+	// 빛: 플레이어 주변
 	const light = new THREE.PointLight(0xffffff, 0.6, CFG.tile * 5);
 	light.position.set(0, 1, 0);
 	player.mesh.add(light);
 
-	// 방향 인덱스 → 이동 벡터
+	// 방향 → 이동 벡터
 	const dirToDelta = [
 		{ dx: 0, dy: -1 }, // 북
 		{ dx: 1, dy: 0 }, // 동
@@ -59,7 +58,7 @@ function createGame() {
 		{ dx: -1, dy: 0 }, // 서
 	];
 
-	// 초기 방향 설정: 이동 가능한 첫 이웃
+	// 초기 방향: 이동 가능한 첫 이웃
 	(function setInitialDirection() {
 		const dirs = [
 			{ dx: 1, dy: 0, dir: 1 },
@@ -78,7 +77,7 @@ function createGame() {
 		player.setDirection(0);
 	})();
 
-	// 카메라 컨트롤: Pan 비활성화, Zoom 활성화
+	// 카메라 컨트롤: Pan 비활성화, Zoom만
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableRotate = false;
 	controls.enablePan = false;
@@ -97,10 +96,10 @@ function createGame() {
 		toast.style.display = v ? "block" : "none";
 	}
 
-	// 이동 색상 선택 상태 (white 제외)
+	// 이동 색상 상태 (white 제외)
 	let selectedColor = "red";
 
-	// 하이라이트 재질 설정
+	// 하이라이트 재질
 	const highlightMaterials = {};
 	for (const name in COLOR_VALUES) {
 		const base = new THREE.Color(COLOR_VALUES[name]);
@@ -138,13 +137,13 @@ function createGame() {
 		}
 	}
 
-	// 색상 변경 애니메이션 변수
+	// 색상 애니메이션 데이터
 	let colorStart = null;
 	let colorTarget = null;
 	let colorAnimationStart = null;
-	const colorAnimationDuration = 0.4; // seconds
+	const colorAnimationDuration = 0.4;
 
-	// 색상 버튼 클릭 시
+	// 색상 버튼 클릭
 	document.querySelectorAll(".color-btn").forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const color = btn.getAttribute("data-color");
@@ -157,22 +156,22 @@ function createGame() {
 		});
 	});
 
-	// 방향 버튼 클릭 시
+	// 방향 버튼 클릭
 	document.querySelectorAll(".arrow-btn").forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const dir = parseInt(btn.getAttribute("data-dir"), 10);
 			player.setDirection(dir);
 			highlightAheadTile();
+			updateVisibilityTargets();
 		});
 	});
 
-	// speed 슬라이더 초기화 및 변화 처리
+	// speed 슬라이더 설정
 	const speedSlider = document.getElementById("speedSlider");
 	const baseMoveInterval = 0.6;
 	const baseMoveDuration = 0.18;
 	let moveInterval = baseMoveInterval * parseFloat(speedSlider.value);
 	CFG.moveDuration = baseMoveDuration * parseFloat(speedSlider.value);
-
 	speedSlider.addEventListener("input", () => {
 		const val = parseFloat(speedSlider.value);
 		moveInterval = baseMoveInterval * val;
@@ -181,7 +180,36 @@ function createGame() {
 
 	let timeSinceLastMove = 0;
 
-	// 키보드 입력 처리: WASD로 방향 회전, 숫자키로 색 변경
+	// 기둥+타일 투명도 목표 갱신
+	function computeTargetVisibility() {
+		const dir = player.state.dir;
+		return (obj) => {
+			const gx = obj.userData.gridX;
+			const gy = obj.userData.gridY;
+			if (dir === 0)
+				return gx === player.state.gx && gy < player.state.gy;
+			if (dir === 1)
+				return gy === player.state.gy && gx > player.state.gx;
+			if (dir === 2)
+				return gx === player.state.gx && gy > player.state.gy;
+			if (dir === 3)
+				return gy === player.state.gy && gx < player.state.gx;
+			return false;
+		};
+	}
+
+	function updateVisibilityTargets() {
+		const isVisible = computeTargetVisibility();
+		level.floors.forEach((floor) => {
+			floor.userData.targetOpacity = isVisible(floor) ? 1 : 0;
+		});
+		level.pillars.forEach((pillar) => {
+			pillar.userData.targetOpacity = isVisible(pillar) ? 1 : 0;
+		});
+	}
+	updateVisibilityTargets();
+
+	// 입력 처리 (WASD 회전, 1/2/3 색 선택)
 	bindInput({
 		isLocked: () => cleared || player.state.isMoving,
 		onMove: () => {},
@@ -196,10 +224,12 @@ function createGame() {
 			clearHighlight();
 			timeSinceLastMove = 0;
 			highlightAheadTile();
+			updateVisibilityTargets();
 		},
 		onRotate: (dir) => {
 			player.setDirection(dir);
 			highlightAheadTile();
+			updateVisibilityTargets();
 		},
 		onColorKey: (color) => {
 			selectedColor = color;
@@ -211,43 +241,9 @@ function createGame() {
 		},
 	});
 
-	// 새 변수: 모든 타일과 기둥의 현재/목표 투명도
-	function computeTargetVisibility() {
-		// 보일지 여부 판단
-		const dir = player.state.dir;
-		return (obj) => {
-			const gx = obj.userData.gridX;
-			const gy = obj.userData.gridY;
-			// 방향별로 같은 행/열 + 앞/뒤 판별
-			if (dir === 0)
-				return gx === player.state.gx && gy < player.state.gy; // 북
-			if (dir === 1)
-				return gy === player.state.gy && gx > player.state.gx; // 동
-			if (dir === 2)
-				return gx === player.state.gx && gy > player.state.gy; // 남
-			if (dir === 3)
-				return gy === player.state.gy && gx < player.state.gx; // 서
-			return false;
-		};
-	}
-
-	// 회전 시 targetOpacity를 설정해 페이드 시작
-	function updateVisibilityTargets() {
-		const isVisible = computeTargetVisibility();
-		level.floors.forEach((floor) => {
-			floor.userData.targetOpacity = isVisible(floor) ? 1 : 0;
-		});
-		level.pillars.forEach((pillar) => {
-			pillar.userData.targetOpacity = isVisible(pillar) ? 1 : 0;
-		});
-	}
-
-	// 초기 가시성 목표 설정
-	updateVisibilityTargets();
-
 	const clock = new THREE.Clock();
 	function update(dt) {
-		// 색상 애니메이션 처리
+		// 색상 애니메이션
 		if (colorAnimationStart !== null) {
 			const elapsed = performance.now() - colorAnimationStart;
 			const t = Math.min(elapsed / (colorAnimationDuration * 1000), 1);
@@ -257,7 +253,7 @@ function createGame() {
 			}
 		}
 
-		// 플레이어 이동 업데이트
+		// 애니메이션 기반 이동
 		player.update(dt);
 
 		if (!cleared) {
@@ -266,7 +262,7 @@ function createGame() {
 			}
 		}
 
-		// 전진 조건: 색상 일치 & 간격 충족
+		// 이동 처리
 		if (!player.state.isMoving && !cleared) {
 			if (
 				playerColor === selectedColor &&
@@ -295,23 +291,10 @@ function createGame() {
 			}
 		}
 
-		// 목표 도달 체크
-		if (!cleared && map[player.state.gy][player.state.gx] === 3) {
-			setCleared(true);
-		}
-
-		// 카메라를 플레이어 중심으로 맞춤
-		controls.target.copy(player.mesh.position);
-		controls.update();
-
-		// 다음 타일 하이라이트
-		highlightAheadTile();
-
-		// 1. 모든 타일/기둥의 opacity를 목표값으로 점진적으로 이동
+		// Fade: 투명도 목표로 점진적 변화
 		level.floors.forEach((floor) => {
 			const target = floor.userData.targetOpacity ?? 0;
 			floor.material.opacity += (target - floor.material.opacity) * 0.08;
-			// 0.05 이하이면 visible false
 			floor.visible = floor.material.opacity > 0.05;
 		});
 		level.pillars.forEach((pillar) => {
@@ -321,8 +304,17 @@ function createGame() {
 			pillar.visible = pillar.material.opacity > 0.05;
 		});
 
-		// 2. 회전 시 visibility target 다시 설정
-		// 방향이 바뀌었다면 updateVisibilityTargets() 호출
+		// 목표 도달 시
+		if (!cleared && map[player.state.gy][player.state.gx] === 3) {
+			setCleared(true);
+		}
+
+		// 카메라를 플레이어 위치로 맞춤
+		controls.target.copy(player.mesh.position);
+		controls.update();
+
+		// 다음 타일 하이라이트
+		highlightAheadTile();
 	}
 
 	function loop() {

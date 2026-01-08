@@ -69,7 +69,7 @@
 			.color-btn[data-color="blue"] {
 				background: #5090e7;
 			}
-			/* Direction buttons container */
+			/* 방향 버튼 컨테이너 */
 			#direction-buttons {
 				margin-top: 12px;
 				position: relative;
@@ -90,31 +90,31 @@
 				justify-content: center;
 				cursor: pointer;
 			}
-			/* Rotate arrow icons 180° to match character directions */
+			/* 아이콘을 180도 돌려 실제 방향과 맞춤 */
 			.arrow-btn span {
 				display: block;
 				transform: rotate(180deg);
 			}
-			/* Position and rotate buttons to align with isometric directions */
+			/* 아이소메트릭에 맞춘 위치/회전 */
 			.dir-north {
 				top: 0;
 				left: 50%;
-				transform: translateX(-50%) rotate(225deg);
+				transform: translateX(-50%) rotate(-45deg);
 			}
 			.dir-east {
 				right: 0;
 				top: 50%;
-				transform: translateY(-50%) rotate(315deg);
+				transform: translateY(-50%) rotate(45deg);
 			}
 			.dir-south {
 				bottom: 0;
 				left: 50%;
-				transform: translateX(-50%) rotate(45deg);
+				transform: translateX(-50%) rotate(135deg);
 			}
 			.dir-west {
 				left: 0;
 				top: 50%;
-				transform: translateY(-50%) rotate(135deg);
+				transform: translateY(-50%) rotate(225deg);
 			}
 			#speedContainer {
 				margin-top: 8px;
@@ -127,12 +127,11 @@
 	<body>
 		<div id="ui">
 			<div>
-				<b>조작</b>: 색(red/yellow/blue) 선택 → 전진 / 화살표 버튼 →
-				방향 회전 / R 키: 다시 시작
+				<b>조작</b>: 색(red/yellow/blue) 선택 → 전진 / 화살표 버튼 또는
+				WASD → 방향 회전 / 1·2·3 키: 색 선택 / R 키: 다시 시작
 			</div>
 			<div>목표: Start(흰색) → Goal(회색)</div>
 
-			<!-- 이동 색상 버튼 -->
 			<div id="color-buttons">
 				<button
 					class="color-btn"
@@ -151,7 +150,6 @@
 				></button>
 			</div>
 
-			<!-- 방향 전환 버튼 (아이소메트릭 방향에 맞춰 위치/회전) -->
 			<div id="direction-buttons">
 				<button class="arrow-btn dir-north" data-dir="0">
 					<span>▲</span>
@@ -167,7 +165,6 @@
 				</button>
 			</div>
 
-			<!-- 속도 조절 슬라이더 -->
 			<div id="speedContainer">
 				<label for="speedSlider">Speed:</label>
 				<input

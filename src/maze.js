@@ -1,85 +1,112 @@
-import { COLORS } from "./config.js";
+// src/maze.js
 
-// DFS 백트래커를 사용해 미로를 생성 (0=길, 1=벽, 2=시작, 3=목표)
+// 1 = 벽
+// 0 = 길
+// 2 = 시작
+// 3 = 목표
+
 export function generateMaze(width, height) {
+	// 홀수 크기 보정 (DFS 미로는 홀수가 안정적)
+	if (width % 2 === 0) width += 1;
+	if (height % 2 === 0) height += 1;
+
+	// 전부 벽으로 초기화
 	const maze = Array.from({ length: height }, () => Array(width).fill(1));
-	const stack = [];
-	maze[1][1] = 0;
-	stack.push([1, 1]);
+
 	const dirs = [
-		[0, -2],
-		[2, 0],
-		[0, 2],
-		[-2, 0],
+		{ x: 0, y: -2 }, // 북
+		{ x: 2, y: 0 }, // 동
+		{ x: 0, y: 2 }, // 남
+		{ x: -2, y: 0 }, // 서
 	];
-	while (stack.length) {
-		const [x, y] = stack[stack.length - 1];
-		const neighbors = dirs
-			.map(([dx, dy]) => [x + dx, y + dy, x + dx / 2, y + dy / 2])
-			.filter(([nx, ny]) => {
-				return (
-					nx > 0 &&
-					ny > 0 &&
-					nx < width - 1 &&
-					ny < height - 1 &&
-					maze[ny][nx] === 1
-				);
-			});
-		if (neighbors.length) {
-			const [nx, ny, wx, wy] =
-				neighbors[Math.floor(Math.random() * neighbors.length)];
-			maze[ny][nx] = 0;
-			maze[wy][wx] = 0;
-			stack.push([nx, ny]);
-		} else {
-			stack.pop();
+
+	function shuffle(array) {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
 		}
 	}
+
+	function carve(x, y) {
+		maze[y][x] = 0;
+		shuffle(dirs);
+
+		for (const d of dirs) {
+			const nx = x + d.x;
+			const ny = y + d.y;
+
+			if (
+				nx > 0 &&
+				ny > 0 &&
+				nx < width - 1 &&
+				ny < height - 1 &&
+				maze[ny][nx] === 1
+			) {
+				maze[y + d.y / 2][x + d.x / 2] = 0;
+				carve(nx, ny);
+			}
+		}
+	}
+
+	// 시작 지점
+	carve(1, 1);
+
+	// 시작 / 목표 지정
 	maze[1][1] = 2;
 	maze[height - 2][width - 2] = 3;
+
 	return maze;
 }
 
-// 무작위 색상 배정을 일정한 그룹 단위로 수행
+/**
+ * 타일 색상 그룹화
+ * - 완전 랜덤이 아니라
+ * - 인접 타일과 색이 이어질 확률을 높임
+ */
 export function assignTileColors(map) {
 	const rows = map.length;
 	const cols = map[0].length;
 	const colorMap = Array.from({ length: rows }, () => Array(cols).fill(null));
+
 	const availableColors = ["red", "yellow", "blue"];
 
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
-			if (map[y][x] !== 1) {
-				let chosenColor = null;
-				// 왼쪽 이웃이 같은 지점일 경우 색상 유지 가능
-				if (
-					x > 0 &&
-					map[y][x - 1] !== 1 &&
-					colorMap[y][x - 1] &&
-					Math.random() < 0.7
-				) {
-					chosenColor = colorMap[y][x - 1];
-				}
-				// 위쪽 이웃이 같은 지점일 경우 색상 유지 가능
-				if (
-					y > 0 &&
-					map[y - 1][x] !== 1 &&
-					colorMap[y - 1][x] &&
-					!chosenColor &&
-					Math.random() < 0.7
-				) {
-					chosenColor = colorMap[y - 1][x];
-				}
-				// 결정되지 않았다면 무작위 색상
-				if (!chosenColor) {
-					chosenColor =
-						availableColors[
-							Math.floor(Math.random() * availableColors.length)
-						];
-				}
-				colorMap[y][x] = chosenColor;
+			if (map[y][x] === 1) continue;
+
+			let color = null;
+
+			// 왼쪽 타일과 이어질 확률
+			if (
+				x > 0 &&
+				map[y][x - 1] !== 1 &&
+				colorMap[y][x - 1] &&
+				Math.random() < 0.7
+			) {
+				color = colorMap[y][x - 1];
 			}
+
+			// 위 타일과 이어질 확률
+			if (
+				!color &&
+				y > 0 &&
+				map[y - 1][x] !== 1 &&
+				colorMap[y - 1][x] &&
+				Math.random() < 0.7
+			) {
+				color = colorMap[y - 1][x];
+			}
+
+			if (!color) {
+				color =
+					availableColors[
+						Math.floor(Math.random() * availableColors.length)
+					];
+			}
+
+			colorMap[y][x] = color;
 		}
 	}
+
 	return colorMap;
 }

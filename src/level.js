@@ -45,7 +45,6 @@ export function createLevel(scene, map, colorMap) {
 		});
 	}
 
-	// 기둥 높이를 크게 설정
 	const pillarHeight = CFG.tile * rows * 2;
 	const topGeo = new THREE.BoxGeometry(CFG.tile, CFG.floorH, CFG.tile);
 	const pillarGeo = new THREE.BoxGeometry(CFG.tile, pillarHeight, CFG.tile);
@@ -59,16 +58,13 @@ export function createLevel(scene, map, colorMap) {
 			if (v !== 1) {
 				const p = gridToWorld(x, y);
 				const colorName = colorMap[y][x] ?? "gray";
-
-				// 기둥과 바닥의 material 투명도 설정을 추가
 				const topMat = floorMats[colorName] || floorMats.gray;
 				const topMesh = new THREE.Mesh(topGeo, topMat);
 				topMesh.position.set(p.x, -CFG.floorH * 0.5, p.z);
 				topMesh.receiveShadow = true;
 				topMesh.material.transparent = true;
-				topMesh.material.opacity = 1; // 시작은 보임
+				topMesh.material.opacity = 1;
 
-				// 기둥 material도 투명도 설정
 				const pillarMat = new THREE.MeshStandardMaterial({
 					color: COLOR_VALUES[colorName] || COLOR_VALUES.gray,
 					roughness: 0.8,
@@ -76,7 +72,6 @@ export function createLevel(scene, map, colorMap) {
 				});
 				pillarMat.transparent = true;
 				pillarMat.opacity = 1;
-
 				const pillarMesh = new THREE.Mesh(pillarGeo, pillarMat);
 				pillarMesh.position.set(
 					p.x,
@@ -86,21 +81,21 @@ export function createLevel(scene, map, colorMap) {
 				pillarMesh.castShadow = true;
 				pillarMesh.receiveShadow = true;
 
-				// 기둥에도 grid 좌표 저장
+				topMesh.userData.color = colorName;
+				topMesh.userData.gridX = x;
+				topMesh.userData.gridY = y;
+				topMesh.userData.originalMaterial = topMat;
+
 				pillarMesh.userData.gridX = x;
 				pillarMesh.userData.gridY = y;
 
-				// 이후 floors, pillars 배열에 push
 				floors.push(topMesh);
 				pillars.push(pillarMesh);
-
 				group.add(topMesh);
 				group.add(pillarMesh);
 			}
 		}
 	}
-
-	// 시작/목표 마커는 생략 (필요 시 기존 코드 사용)
 
 	return {
 		group,

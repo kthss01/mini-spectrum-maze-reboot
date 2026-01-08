@@ -1,4 +1,4 @@
-import * as THREE from "https://unpkg.com/three@0.161.0/build/three.module.js";
+import * as THREE from "three";
 import { CFG } from "./config.js";
 
 // 미로 크기에 따라 카메라 viewSize와 radius 계산
@@ -11,7 +11,7 @@ export function computeCameraSettings(map) {
 	return { viewSize, radius };
 }
 
-// 씬, 렌더러, 카메라를 생성하고 resize 시 갱신 함수 제공
+// 씬, 렌더러, 카메라를 생성하고 리사이즈 시 갱신
 export function createThreeCore() {
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x0f1115);
@@ -22,7 +22,6 @@ export function createThreeCore() {
 	renderer.shadowMap.enabled = true;
 	document.body.appendChild(renderer.domElement);
 
-	// 기본 조명
 	scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 	const dir = new THREE.DirectionalLight(0xffffff, 0.95);
 	dir.position.set(20, 30, 10);
@@ -30,7 +29,6 @@ export function createThreeCore() {
 	dir.shadow.mapSize.set(1024, 1024);
 	scene.add(dir);
 
-	// Orthographic 카메라 생성
 	const camera = new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 200);
 	camera.zoom = CFG.zoom;
 

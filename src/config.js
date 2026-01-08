@@ -10,10 +10,9 @@ export const CFG = {
 	radius: 40,
 };
 
-// 무작위 색상 목록 (흰/검 제외)
+// 타일 색상 종류
 export const COLORS = ["gray", "red", "yellow", "blue"];
 
-// 타일 색상 값
 export const COLOR_VALUES = {
 	gray: 0x1e2430,
 	red: 0xd95763,

@@ -10,11 +10,10 @@ export function createPlayer(scene, level) {
 		CFG.tile * 0.45
 	);
 	const playerMat = new THREE.MeshStandardMaterial({
-		color: PLAYER_COLORS.white, // 초기 색상
+		color: PLAYER_COLORS.white,
 		roughness: 0.5,
 		metalness: 0.0,
 	});
-	// 하이라이트를 위한 emissive 색상 설정
 	playerMat.emissive = new THREE.Color(0xffffff);
 	playerMat.emissiveIntensity = 0.4;
 
@@ -40,10 +39,6 @@ export function createPlayer(scene, level) {
 	function setDirection(newDir) {
 		state.dir = ((newDir % 4) + 4) % 4;
 		mesh.rotation.y = state.dir * (Math.PI / 2);
-	}
-
-	function turnClockwise() {
-		setDirection(state.dir + 1);
 	}
 
 	function beginMoveTo(nx, ny) {
@@ -96,6 +91,5 @@ export function createPlayer(scene, level) {
 		update,
 		reset,
 		setDirection,
-		turnClockwise,
 	};
 }

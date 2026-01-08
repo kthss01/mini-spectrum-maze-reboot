@@ -69,6 +69,7 @@
 			.color-btn[data-color="blue"] {
 				background: #5090e7;
 			}
+
 			/* 방향 버튼 컨테이너 */
 			#direction-buttons {
 				margin-top: 12px;
@@ -90,20 +91,19 @@
 				justify-content: center;
 				cursor: pointer;
 			}
-			/* 아이콘을 180도 돌려 실제 방향과 맞춤 */
 			.arrow-btn span {
 				display: block;
 				transform: rotate(180deg);
 			}
-			/* 아이소메트릭에 맞춘 위치/회전 */
+			/* 아이소메트릭 방향에 맞춘 위치/회전 */
 			.dir-north {
 				top: 0;
 				left: 50%;
 				transform: translateX(-50%) rotate(-45deg);
 			}
 			.dir-east {
-				right: 0;
 				top: 50%;
+				right: 0;
 				transform: translateY(-50%) rotate(45deg);
 			}
 			.dir-south {
@@ -116,10 +116,13 @@
 				top: 50%;
 				transform: translateY(-50%) rotate(225deg);
 			}
-			#speedContainer {
+
+			#speedContainer,
+			#angleContainer {
 				margin-top: 8px;
 			}
-			#speedSlider {
+			#speedSlider,
+			#angleSlider {
 				width: 100%;
 			}
 		</style>
@@ -174,6 +177,19 @@
 					max="2.0"
 					step="0.1"
 					value="1"
+				/>
+			</div>
+
+			<!-- 원뿔 시야 각도 조절용 슬라이더 -->
+			<div id="angleContainer">
+				<label for="angleSlider">View Angle:</label>
+				<input
+					type="range"
+					id="angleSlider"
+					min="10"
+					max="180"
+					step="5"
+					value="60"
 				/>
 			</div>
 		</div>

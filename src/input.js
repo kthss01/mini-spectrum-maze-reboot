@@ -1,4 +1,4 @@
-// WASD 회전, R 키 재시작, 1/2/3 키 색 선택, (onMove는 사용하지 않음)
+// WASD 회전, R 재시작, 1/2/3 키 색 선택
 export function bindInput({
 	onMove,
 	onRestart,

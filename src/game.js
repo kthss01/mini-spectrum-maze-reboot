@@ -163,7 +163,6 @@ function createGame() {
 			const dir = parseInt(btn.getAttribute("data-dir"), 10);
 			player.setDirection(dir);
 			highlightAheadTile();
-			updatePillarsVisibility();
 		});
 	});
 
@@ -197,12 +196,10 @@ function createGame() {
 			clearHighlight();
 			timeSinceLastMove = 0;
 			highlightAheadTile();
-			updatePillarsVisibility();
 		},
 		onRotate: (dir) => {
 			player.setDirection(dir);
 			highlightAheadTile();
-			updatePillarsVisibility();
 		},
 		onColorKey: (color) => {
 			selectedColor = color;
@@ -214,30 +211,39 @@ function createGame() {
 		},
 	});
 
-	// 기둥 가시성 업데이트: 바라보는 방향의 기둥만 표시
-	function updatePillarsVisibility() {
-		const dirIdx = player.state.dir;
+	// 새 변수: 모든 타일과 기둥의 현재/목표 투명도
+	function computeTargetVisibility() {
+		// 보일지 여부 판단
+		const dir = player.state.dir;
+		return (obj) => {
+			const gx = obj.userData.gridX;
+			const gy = obj.userData.gridY;
+			// 방향별로 같은 행/열 + 앞/뒤 판별
+			if (dir === 0)
+				return gx === player.state.gx && gy < player.state.gy; // 북
+			if (dir === 1)
+				return gy === player.state.gy && gx > player.state.gx; // 동
+			if (dir === 2)
+				return gx === player.state.gx && gy > player.state.gy; // 남
+			if (dir === 3)
+				return gy === player.state.gy && gx < player.state.gx; // 서
+			return false;
+		};
+	}
+
+	// 회전 시 targetOpacity를 설정해 페이드 시작
+	function updateVisibilityTargets() {
+		const isVisible = computeTargetVisibility();
+		level.floors.forEach((floor) => {
+			floor.userData.targetOpacity = isVisible(floor) ? 1 : 0;
+		});
 		level.pillars.forEach((pillar) => {
-			const gx = pillar.userData.gridX;
-			const gy = pillar.userData.gridY;
-			if (dirIdx === 0) {
-				// 북: 같은 열, 플레이어보다 위쪽
-				pillar.visible = gx === player.state.gx && gy < player.state.gy;
-			} else if (dirIdx === 1) {
-				// 동: 같은 행, 플레이어보다 오른쪽
-				pillar.visible = gy === player.state.gy && gx > player.state.gx;
-			} else if (dirIdx === 2) {
-				// 남: 같은 열, 플레이어보다 아래쪽
-				pillar.visible = gx === player.state.gx && gy > player.state.gy;
-			} else if (dirIdx === 3) {
-				// 서: 같은 행, 플레이어보다 왼쪽
-				pillar.visible = gy === player.state.gy && gx < player.state.gx;
-			}
+			pillar.userData.targetOpacity = isVisible(pillar) ? 1 : 0;
 		});
 	}
 
-	// 초기 기둥 가시성 설정
-	updatePillarsVisibility();
+	// 초기 가시성 목표 설정
+	updateVisibilityTargets();
 
 	const clock = new THREE.Clock();
 	function update(dt) {
@@ -300,6 +306,23 @@ function createGame() {
 
 		// 다음 타일 하이라이트
 		highlightAheadTile();
+
+		// 1. 모든 타일/기둥의 opacity를 목표값으로 점진적으로 이동
+		level.floors.forEach((floor) => {
+			const target = floor.userData.targetOpacity ?? 0;
+			floor.material.opacity += (target - floor.material.opacity) * 0.08;
+			// 0.05 이하이면 visible false
+			floor.visible = floor.material.opacity > 0.05;
+		});
+		level.pillars.forEach((pillar) => {
+			const target = pillar.userData.targetOpacity ?? 0;
+			pillar.material.opacity +=
+				(target - pillar.material.opacity) * 0.08;
+			pillar.visible = pillar.material.opacity > 0.05;
+		});
+
+		// 2. 회전 시 visibility target 다시 설정
+		// 방향이 바뀌었다면 updateVisibilityTargets() 호출
 	}
 
 	function loop() {

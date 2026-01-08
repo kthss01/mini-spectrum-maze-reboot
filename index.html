@@ -70,7 +70,6 @@
 				background: #5090e7;
 			}
 
-			/* 방향 버튼 컨테이너 */
 			#direction-buttons {
 				margin-top: 12px;
 				position: relative;
@@ -95,7 +94,6 @@
 				display: block;
 				transform: rotate(180deg);
 			}
-			/* 아이소메트릭 방향에 맞춘 위치/회전 */
 			.dir-north {
 				top: 0;
 				left: 50%;
@@ -118,7 +116,8 @@
 			}
 
 			#speedContainer,
-			#angleContainer {
+			#angleContainer,
+			#guideContainer {
 				margin-top: 8px;
 			}
 			#speedSlider,
@@ -135,24 +134,14 @@
 			</div>
 			<div>목표: Start(흰색) → Goal(회색)</div>
 
+			<!-- 색 선택 버튼 -->
 			<div id="color-buttons">
-				<button
-					class="color-btn"
-					data-color="red"
-					title="빨간색"
-				></button>
-				<button
-					class="color-btn"
-					data-color="yellow"
-					title="노란색"
-				></button>
-				<button
-					class="color-btn"
-					data-color="blue"
-					title="파란색"
-				></button>
+				<button class="color-btn" data-color="red"></button>
+				<button class="color-btn" data-color="yellow"></button>
+				<button class="color-btn" data-color="blue"></button>
 			</div>
 
+			<!-- 방향 전환 버튼 -->
 			<div id="direction-buttons">
 				<button class="arrow-btn dir-north" data-dir="0">
 					<span>▲</span>
@@ -168,6 +157,7 @@
 				</button>
 			</div>
 
+			<!-- 속도 조절 슬라이더 -->
 			<div id="speedContainer">
 				<label for="speedSlider">Speed:</label>
 				<input
@@ -180,7 +170,7 @@
 				/>
 			</div>
 
-			<!-- 원뿔 시야 각도 조절용 슬라이더 -->
+			<!-- 원뿔 시야 각도 슬라이더 -->
 			<div id="angleContainer">
 				<label for="angleSlider">View Angle:</label>
 				<input
@@ -191,6 +181,14 @@
 					step="5"
 					value="60"
 				/>
+			</div>
+
+			<!-- 가이드라인 표시 체크박스 -->
+			<div id="guideContainer">
+				<label
+					><input type="checkbox" id="guideToggle" /> Show view
+					cone</label
+				>
 			</div>
 		</div>
 		<div id="toast">CLEAR!</div>

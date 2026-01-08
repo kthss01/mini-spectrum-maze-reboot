@@ -10,10 +10,11 @@ import { bindInput } from "./input.js";
 function createGame() {
 	const MAZE_WIDTH = 31;
 	const MAZE_HEIGHT = 33;
+
 	const map = generateMaze(MAZE_WIDTH, MAZE_HEIGHT);
 	const colorMap = assignTileColors(map);
 
-	// 시작/목표 위치 및 색 지정
+	// start/goal 찾아서 색 지정
 	let startX = 1,
 		startY = 1,
 		goalX = MAZE_WIDTH - 2,
@@ -32,24 +33,23 @@ function createGame() {
 	colorMap[startY][startX] = "white";
 	colorMap[goalY][goalX] = "gray";
 
-	// 카메라 설정
+	// camera
 	const { viewSize, radius } = computeCameraSettings(map);
 	CFG.viewSize = viewSize;
 	CFG.radius = radius;
 
-	// 씬, 레벨, 플레이어
 	const { scene, renderer, camera } = createThreeCore();
 	const level = createLevel(scene, map, colorMap);
 	const player = createPlayer(scene, level);
+
 	let playerColor = "white";
 	player.mesh.material.color.set(PLAYER_COLORS.white);
 
-	// 빛 효과
+	// player light
 	const light = new THREE.PointLight(0xffffff, 0.6, CFG.tile * 5);
 	light.position.set(0, 1, 0);
 	player.mesh.add(light);
 
-	// 방향 벡터
 	const dirToDelta = [
 		{ dx: 0, dy: -1 },
 		{ dx: 1, dy: 0 },
@@ -57,7 +57,7 @@ function createGame() {
 		{ dx: -1, dy: 0 },
 	];
 
-	// 초기 방향
+	// initial direction
 	(function setInitialDirection() {
 		const dirs = [
 			{ dx: 1, dy: 0, dir: 1 },
@@ -76,28 +76,28 @@ function createGame() {
 		player.setDirection(0);
 	})();
 
-	// 카메라 컨트롤
+	// camera controls: zoom only
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableRotate = false;
 	controls.enablePan = false;
 	controls.enableZoom = true;
-	controls.screenSpacePanning = true;
 	controls.minZoom = 0.5;
 	controls.maxZoom = 4;
 	controls.update();
 
 	window.addEventListener("contextmenu", (e) => e.preventDefault());
-	const toast = document.getElementById("toast");
 
+	// UI state
+	const toast = document.getElementById("toast");
 	let cleared = false;
 	function setCleared(v) {
 		cleared = v;
 		toast.style.display = v ? "block" : "none";
 	}
 
-	// 색상 선택 상태
 	let selectedColor = "red";
-	// 하이라이트 재질
+
+	// highlight materials (✅ transparent)
 	const highlightMaterials = {};
 	for (const name in COLOR_VALUES) {
 		const base = new THREE.Color(COLOR_VALUES[name]);
@@ -106,6 +106,8 @@ function createGame() {
 			color: hl.getHex(),
 			roughness: 0.4,
 			metalness: 0.0,
+			transparent: true,
+			opacity: 1,
 		});
 	}
 
@@ -117,68 +119,71 @@ function createGame() {
 			currentHighlightTile = null;
 		}
 	}
+
 	function highlightAheadTile() {
 		clearHighlight();
 		if (cleared) return;
+
 		const dirIdx = player.state.dir;
 		const { dx, dy } = dirToDelta[dirIdx];
 		const nx = player.state.gx + dx;
 		const ny = player.state.gy + dy;
+
 		const tile = level.floors.find(
 			(f) => f.userData.gridX === nx && f.userData.gridY === ny
 		);
+
 		if (tile) {
 			const cName = tile.userData.color;
-			const hlMat = highlightMaterials[cName] || highlightMaterials.gray;
-			tile.material = hlMat;
+			tile.material =
+				highlightMaterials[cName] || highlightMaterials.gray;
 			currentHighlightTile = tile;
 		}
 	}
 
-	// 색상 애니메이션
+	// color change animation
 	let colorStart = null;
 	let colorTarget = null;
 	let colorAnimationStart = null;
 	const colorAnimationDuration = 0.4;
 
-	// 색상 버튼
 	document.querySelectorAll(".color-btn").forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const color = btn.getAttribute("data-color");
 			selectedColor = color;
 			playerColor = color;
+
 			colorStart = player.mesh.material.color.clone();
 			colorTarget = new THREE.Color(PLAYER_COLORS[color]);
 			colorAnimationStart = performance.now();
-			highlightAheadTile();
 		});
 	});
 
-	// 방향 버튼
 	document.querySelectorAll(".arrow-btn").forEach((btn) => {
 		btn.addEventListener("click", () => {
 			const dir = parseInt(btn.getAttribute("data-dir"), 10);
 			player.setDirection(dir);
-			highlightAheadTile();
 			updateVisibilityTargets();
+			highlightAheadTile();
 		});
 	});
 
-	// speed 슬라이더
+	// speed slider
 	const speedSlider = document.getElementById("speedSlider");
 	const baseMoveInterval = 0.6;
 	const baseMoveDuration = 0.18;
 	let moveInterval = baseMoveInterval * parseFloat(speedSlider.value);
 	CFG.moveDuration = baseMoveDuration * parseFloat(speedSlider.value);
+
 	speedSlider.addEventListener("input", () => {
 		const val = parseFloat(speedSlider.value);
 		moveInterval = baseMoveInterval * val;
 		CFG.moveDuration = baseMoveDuration * val;
 	});
 
-	// 원뿔 각도 슬라이더
+	// cone angle slider
 	const angleSlider = document.getElementById("angleSlider");
-	let viewAngleDeg = parseFloat(angleSlider.value); // degrees
+	let viewAngleDeg = parseFloat(angleSlider.value);
 	angleSlider.addEventListener("input", () => {
 		viewAngleDeg = parseFloat(angleSlider.value);
 		updateVisibilityTargets();
@@ -186,64 +191,69 @@ function createGame() {
 
 	let timeSinceLastMove = 0;
 
-	// 투명도 목표 설정 (원뿔 시야)
 	function computeTargetVisibility() {
 		const dirIdx = player.state.dir;
 		const dirVec = new THREE.Vector2(
 			dirToDelta[dirIdx].dx,
 			dirToDelta[dirIdx].dy
 		).normalize();
+
 		const halfAngleRad = THREE.MathUtils.degToRad(viewAngleDeg / 2);
 		const cosThreshold = Math.cos(halfAngleRad);
 
 		return (obj) => {
 			const gx = obj.userData.gridX;
 			const gy = obj.userData.gridY;
-			// 플레이어 자기 자신 타일은 항상 보임
+
 			if (gx === player.state.gx && gy === player.state.gy) return true;
-			// 타일로 가는 벡터 (2D 평면)
-			const vec = new THREE.Vector2(
+
+			const to = new THREE.Vector2(
 				gx - player.state.gx,
 				gy - player.state.gy
-			).normalize();
-			const dot = dirVec.dot(vec);
-			// cos(θ/2) 이상이면 시야 범위
+			);
+			if (to.lengthSq() === 0) return true;
+			to.normalize();
+
+			const dot = dirVec.dot(to);
 			return dot >= cosThreshold;
 		};
 	}
 
 	function updateVisibilityTargets() {
 		const isVisible = computeTargetVisibility();
-		level.floors.forEach((floor) => {
+		// ✅ 모든 타일/기둥에 매번 targetOpacity를 재설정 (잔상 방지 핵심)
+		for (const floor of level.floors) {
 			floor.userData.targetOpacity = isVisible(floor) ? 1 : 0;
-		});
-		level.pillars.forEach((pillar) => {
+		}
+		for (const pillar of level.pillars) {
 			pillar.userData.targetOpacity = isVisible(pillar) ? 1 : 0;
-		});
+		}
 	}
+
 	updateVisibilityTargets();
 
-	// 입력 처리 (WASD 회전, R 재시작, 1/2/3 색 선택)
+	// keyboard: WASD rotate, 1/2/3 select, R restart
+	function restart() {
+		setCleared(false);
+		player.reset();
+		selectedColor = "red";
+		playerColor = "red";
+		colorStart = player.mesh.material.color.clone();
+		colorTarget = new THREE.Color(PLAYER_COLORS.red);
+		colorAnimationStart = performance.now();
+		timeSinceLastMove = 0;
+		updateVisibilityTargets();
+		highlightAheadTile();
+	}
+
 	bindInput({
 		isLocked: () => cleared || player.state.isMoving,
 		onMove: () => {},
-		onRestart: () => {
-			setCleared(false);
-			player.reset();
-			selectedColor = "red";
-			playerColor = "red";
-			colorStart = player.mesh.material.color.clone();
-			colorTarget = new THREE.Color(PLAYER_COLORS.red);
-			colorAnimationStart = performance.now();
-			clearHighlight();
-			timeSinceLastMove = 0;
-			highlightAheadTile();
-			updateVisibilityTargets();
-		},
+		onRestart: restart,
 		onRotate: (dir) => {
 			player.setDirection(dir);
-			highlightAheadTile();
 			updateVisibilityTargets();
+			highlightAheadTile();
 		},
 		onColorKey: (color) => {
 			selectedColor = color;
@@ -251,31 +261,33 @@ function createGame() {
 			colorStart = player.mesh.material.color.clone();
 			colorTarget = new THREE.Color(PLAYER_COLORS[color]);
 			colorAnimationStart = performance.now();
-			highlightAheadTile();
 		},
 	});
 
 	const clock = new THREE.Clock();
+
 	function update(dt) {
-		// 색상 애니메이션 처리
+		// animate player color
 		if (colorAnimationStart !== null) {
 			const elapsed = performance.now() - colorAnimationStart;
 			const t = Math.min(elapsed / (colorAnimationDuration * 1000), 1);
 			player.mesh.material.color.copy(colorStart).lerp(colorTarget, t);
-			if (t >= 1) {
-				colorAnimationStart = null;
-			}
+			if (t >= 1) colorAnimationStart = null;
 		}
 
-		player.update(dt);
+		// movement update
+		const finishedMove = player.update(dt);
 
-		if (!cleared) {
-			if (!player.state.isMoving) {
-				timeSinceLastMove += dt;
-			}
+		// ✅ 이동이 끝났을 때는 반드시 시야 재계산
+		if (finishedMove) {
+			updateVisibilityTargets();
 		}
 
-		// 자동 전진
+		if (!cleared && !player.state.isMoving) {
+			timeSinceLastMove += dt;
+		}
+
+		// auto-forward
 		if (!player.state.isMoving && !cleared) {
 			if (
 				playerColor === selectedColor &&
@@ -286,15 +298,18 @@ function createGame() {
 					const { dx, dy } = dirToDelta[dirIdx];
 					const nx = player.state.gx + dx;
 					const ny = player.state.gy + dy;
+
 					if (level.canWalk(nx, ny)) {
 						const tileColor = level.colorMap[ny][nx] || "gray";
 						if (
 							tileColor === selectedColor ||
 							tileColor === "gray"
 						) {
-							const moved = player.tryMove(dx, dy);
-							if (moved) {
+							const started = player.tryMove(dx, dy);
+							if (started) {
 								timeSinceLastMove = 0;
+								// ✅ 이동 시작 순간에도 시야 재계산 (잔상 최소화)
+								updateVisibilityTargets();
 							}
 						}
 					}
@@ -302,29 +317,26 @@ function createGame() {
 			}
 		}
 
-		// 타일/기둥 투명도 점진적 변화
-		level.floors.forEach((floor) => {
+		// fade apply
+		for (const floor of level.floors) {
 			const target = floor.userData.targetOpacity ?? 0;
-			floor.material.opacity += (target - floor.material.opacity) * 0.08;
-			floor.visible = floor.material.opacity > 0.05;
-		});
-		level.pillars.forEach((pillar) => {
+			floor.material.opacity += (target - floor.material.opacity) * 0.1;
+			floor.visible = floor.material.opacity > 0.03;
+		}
+		for (const pillar of level.pillars) {
 			const target = pillar.userData.targetOpacity ?? 0;
-			pillar.material.opacity +=
-				(target - pillar.material.opacity) * 0.08;
-			pillar.visible = pillar.material.opacity > 0.05;
-		});
+			pillar.material.opacity += (target - pillar.material.opacity) * 0.1;
+			pillar.visible = pillar.material.opacity > 0.03;
+		}
 
-		// 목표 도달 체크
+		// goal check
 		if (!cleared && map[player.state.gy][player.state.gx] === 3) {
 			setCleared(true);
 		}
 
-		// 카메라 중심
 		controls.target.copy(player.mesh.position);
 		controls.update();
 
-		// 다음 타일 하이라이트
 		highlightAheadTile();
 	}
 

@@ -10,9 +10,6 @@ export const CFG = {
 	radius: 40,
 };
 
-// 타일 색상 종류
-export const COLORS = ["gray", "red", "yellow", "blue"];
-
 export const COLOR_VALUES = {
 	gray: 0x1e2430,
 	red: 0xd95763,

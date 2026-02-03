@@ -248,7 +248,6 @@ function createGame() {
 
 	bindInput({
 		isLocked: () => cleared || player.state.isMoving,
-		onMove: () => {},
 		onRestart: restart,
 		onRotate: (dir) => {
 			player.setDirection(dir);

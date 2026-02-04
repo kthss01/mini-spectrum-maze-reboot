@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { CFG, PLAYER_COLORS } from "./config.js";
 import { easeInOut } from "./utils.js";
 
-// 플레이어(큐브)와 이동 로직 생성
 export function createPlayer(scene, level) {
 	const playerGeo = new THREE.BoxGeometry(
 		CFG.tile * 0.45,

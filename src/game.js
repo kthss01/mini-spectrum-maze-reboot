@@ -33,7 +33,6 @@ function createGame() {
 	colorMap[startY][startX] = "white";
 	colorMap[goalY][goalX] = "gray";
 
-	// camera
 	const { viewSize, radius } = computeCameraSettings(map);
 	CFG.viewSize = viewSize;
 	CFG.radius = radius;
@@ -45,7 +44,6 @@ function createGame() {
 	let playerColor = "white";
 	player.mesh.material.color.set(PLAYER_COLORS.white);
 
-	// player light
 	const light = new THREE.PointLight(0xffffff, 0.6, CFG.tile * 5);
 	light.position.set(0, 1, 0);
 	player.mesh.add(light);
@@ -57,7 +55,6 @@ function createGame() {
 		{ dx: -1, dy: 0 },
 	];
 
-	// initial direction
 	(function setInitialDirection() {
 		const dirs = [
 			{ dx: 1, dy: 0, dir: 1 },
@@ -76,7 +73,6 @@ function createGame() {
 		player.setDirection(0);
 	})();
 
-	// camera controls: zoom only
 	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableRotate = false;
 	controls.enablePan = false;
@@ -87,7 +83,6 @@ function createGame() {
 
 	window.addEventListener("contextmenu", (e) => e.preventDefault());
 
-	// UI state
 	const toast = document.getElementById("toast");
 	let cleared = false;
 	function setCleared(v) {
@@ -97,7 +92,7 @@ function createGame() {
 
 	let selectedColor = "red";
 
-	// highlight materials (✅ transparent)
+	// highlight materials
 	const highlightMaterials = {};
 	for (const name in COLOR_VALUES) {
 		const base = new THREE.Color(COLOR_VALUES[name]);
@@ -141,7 +136,6 @@ function createGame() {
 		}
 	}
 
-	// color change animation
 	let colorStart = null;
 	let colorTarget = null;
 	let colorAnimationStart = null;
@@ -168,7 +162,6 @@ function createGame() {
 		});
 	});
 
-	// speed slider
 	const speedSlider = document.getElementById("speedSlider");
 	const baseMoveInterval = 0.6;
 	const baseMoveDuration = 0.18;
@@ -181,7 +174,6 @@ function createGame() {
 		CFG.moveDuration = baseMoveDuration * val;
 	});
 
-	// cone angle slider
 	const angleSlider = document.getElementById("angleSlider");
 	let viewAngleDeg = parseFloat(angleSlider.value);
 	angleSlider.addEventListener("input", () => {
@@ -221,7 +213,7 @@ function createGame() {
 
 	function updateVisibilityTargets() {
 		const isVisible = computeTargetVisibility();
-		// ✅ 모든 타일/기둥에 매번 targetOpacity를 재설정 (잔상 방지 핵심)
+		// 모든 타일/기둥에 매번 targetOpacity를 재설정 (잔상 방지)
 		for (const floor of level.floors) {
 			floor.userData.targetOpacity = isVisible(floor) ? 1 : 0;
 		}
@@ -277,7 +269,7 @@ function createGame() {
 		// movement update
 		const finishedMove = player.update(dt);
 
-		// ✅ 이동이 끝났을 때는 반드시 시야 재계산
+		// 이동이 끝났을 때는 시야 재계산
 		if (finishedMove) {
 			updateVisibilityTargets();
 		}
@@ -307,7 +299,7 @@ function createGame() {
 							const started = player.tryMove(dx, dy);
 							if (started) {
 								timeSinceLastMove = 0;
-								// ✅ 이동 시작 순간에도 시야 재계산 (잔상 최소화)
+								// 이동 시작 순간에도 시야 재계산 (잔상 최소화)
 								updateVisibilityTargets();
 							}
 						}

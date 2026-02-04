@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { CFG, COLOR_VALUES } from "./config.js";
 
-// 미로 배열과 색상 맵을 기반으로 타일과 기둥을 생성
 export function createLevel(scene, map, colorMap) {
 	const rows = map.length;
 	const cols = map[0].length;
@@ -36,7 +35,6 @@ export function createLevel(scene, map, colorMap) {
 	const start = findTile(2) ?? { x: 1, y: 1 };
 	const goal = findTile(3) ?? { x: cols - 2, y: rows - 2 };
 
-	// "색상별 베이스 머티리얼" (여기서는 base로만 쓰고, 실제 Mesh에는 clone해서 씀)
 	const baseMats = {};
 	for (const name in COLOR_VALUES) {
 		const m = new THREE.MeshStandardMaterial({
@@ -49,7 +47,6 @@ export function createLevel(scene, map, colorMap) {
 		baseMats[name] = m;
 	}
 
-	// 기둥 높이를 크게 설정 (하단이 화면 밖)
 	const pillarHeight = CFG.tile * rows * 2;
 
 	const topGeo = new THREE.BoxGeometry(CFG.tile, CFG.floorH, CFG.tile);
@@ -66,7 +63,7 @@ export function createLevel(scene, map, colorMap) {
 			const p = gridToWorld(x, y);
 			const colorName = colorMap[y][x] ?? "gray";
 
-			// ✅ 핵심: Mesh마다 material을 clone해서 "개별 인스턴스"로 만든다
+			// Mesh마다 material을 clone해서 개별 인스턴스로 만든다
 			const topMat = (baseMats[colorName] || baseMats.gray).clone();
 			topMat.transparent = true;
 			topMat.opacity = 1;
@@ -84,11 +81,10 @@ export function createLevel(scene, map, colorMap) {
 			pillarMesh.castShadow = true;
 			pillarMesh.receiveShadow = true;
 
-			// userData
 			topMesh.userData.color = colorName;
 			topMesh.userData.gridX = x;
 			topMesh.userData.gridY = y;
-			topMesh.userData.originalMaterial = topMat; // highlight 복구용
+			topMesh.userData.originalMaterial = topMat;
 			topMesh.userData.targetOpacity = 1;
 
 			pillarMesh.userData.gridX = x;

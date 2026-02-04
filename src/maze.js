@@ -1,16 +1,10 @@
-// src/maze.js
-
-// 1 = 벽
-// 0 = 길
-// 2 = 시작
-// 3 = 목표
+// 0 = 길, 1 = 벽, 2 = 시작, 3 = 목표
 
 export function generateMaze(width, height) {
-	// 홀수 크기 보정 (DFS 미로는 홀수가 안정적)
+	// 홀수 크기 보정 (DFS 미로는 홀수 크기가 안정적)
 	if (width % 2 === 0) width += 1;
 	if (height % 2 === 0) height += 1;
 
-	// 전부 벽으로 초기화
 	const maze = Array.from({ length: height }, () => Array(width).fill(1));
 
 	const dirs = [
@@ -48,10 +42,8 @@ export function generateMaze(width, height) {
 		}
 	}
 
-	// 시작 지점
 	carve(1, 1);
 
-	// 시작 / 목표 지정
 	maze[1][1] = 2;
 	maze[height - 2][width - 2] = 3;
 

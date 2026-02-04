@@ -1,4 +1,3 @@
-// WASD 회전, R 재시작, 1/2/3 키 색 선택
 export function bindInput({ onRestart, isLocked, onRotate, onColorKey }) {
 	function onKeyDown(e) {
 		if (isLocked()) return;

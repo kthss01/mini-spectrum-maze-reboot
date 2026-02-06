@@ -44,9 +44,20 @@ npm run preview
 
 ## TypeScript 마이그레이션 상태
 
-- `src` 디렉터리의 런타임 코드가 `.ts/.tsx`로 완전 전환되었습니다.
-- `tsconfig.json`에서 `allowJs`를 비활성화해 JS 소스 혼용을 방지합니다.
-- 현재 기준 `src` 내 `.js/.jsx` 파일은 없습니다.
+현재 전환 단계는 **2단계(완전 전환) 진행중**이며, strict 적용은 아직 완료되지 않았습니다.
+
+### 완료 기준 체크리스트
+
+- [x] `src` 디렉터리의 런타임 코드가 `.ts/.tsx`로 완전 전환됨
+- [x] `tsconfig.json`에서 `allowJs` 비활성화로 JS 소스 혼용 방지
+- [x] UI 계층이 엔진 내부 구현 세부사항에 의존하지 않음
+- [ ] `tsconfig.json`에 `strict: true` 적용
+- [ ] strict 타입 체크 통과(핵심 엔진 모듈 포함)
+
+### 진행중 체크리스트
+
+- [ ] strict 전환을 위한 타입 오류 목록 정리
+- [ ] strict 적용 후 필요한 리팩터링 범위 확정
 
 ## GitHub Pages 배포 (GitHub Actions)
 

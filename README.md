@@ -27,9 +27,20 @@
 ```bash
 npm install
 npm run dev
+npm run build
+npm run preview
 ```
 
 브라우저에서 Vite가 출력한 로컬 주소(`http://localhost:5173` 등)로 접속하면 됩니다.
+
+### npm 스크립트 기준 실행 요약
+
+- 개발 서버: `npm run dev`
+- 프로덕션 빌드: `npm run build`
+- 빌드 결과 확인: `npm run preview`
+
+> 기존 `index.html` 기반 import map 직접 실행 방식은 **deprecated** 입니다.
+> 팀 개발/검증은 Vite + npm 스크립트 워크플로우를 기준으로 진행하세요.
 
 ## GitHub Pages 배포 (GitHub Actions)
 
@@ -47,13 +58,14 @@ npm run dev
 - `index.html`: 앱 엔트리 연결
 - `src/main.tsx`: React 마운트
 - `src/App.tsx`: UI/게임 호스트 컴포넌트
-- `src/gameAdapter.ts`: 게임 인스턴스 마운트/해제
-- `src/game.js`: 게임 루프/상태/입력 연결/시야/자동 이동 핵심 로직
-- `src/maze.js`: 미로 생성 및 타일 색 분배
-- `src/level.js`: 타일/기둥 메쉬 생성, 월드 좌표 변환, 이동 가능 판정
-- `src/player.js`: 플레이어 상태/이동 보간/방향 처리
-- `src/input.js`: 키보드 입력 바인딩
-- `src/camera.js`: Three.js scene/camera/renderer 구성
-- `src/config.js`: 상수 설정값
+- `src/engine/GameEngine.ts`: 게임 루프/상태/입력 연결 핵심 엔진
+- `src/maze.ts`: 미로 생성 및 타일 색 분배
+- `src/level.ts`: 타일/기둥 메쉬 생성, 월드 좌표 변환, 이동 가능 판정
+- `src/player.ts`: 플레이어 상태/이동 보간/방향 처리
+- `src/input.ts`: 키보드 입력 바인딩
+- `src/camera.ts`: Three.js scene/camera/renderer 구성
+- `src/config.ts`: 상수 설정값
+- `src/types/game.ts`: 게임 핵심 타입 정의
 - `src/utils.js`: easing 유틸
+- `docs/migration-plan.md`: 점진 마이그레이션 단계/완료 기준
 - `docs/concept.md`: 컨셉 및 개선 과제 정리

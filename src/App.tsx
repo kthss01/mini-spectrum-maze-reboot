@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { GameEngine } from './engine/GameEngine';
-import type { Direction } from './types/game';
+import type { Direction, TileColor } from './types/game';
 import { GameUI } from './components/GameUI';
 import { Toast } from './components/Toast';
 
@@ -9,7 +9,7 @@ function App() {
   const engineRef = useRef<GameEngine | null>(null);
 
   const [cleared, setCleared] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<'red' | 'yellow' | 'blue'>('red');
+  const [selectedColor, setSelectedColor] = useState<TileColor>('red');
   const [speed, setSpeed] = useState(1);
   const [angle, setAngle] = useState(60);
 
@@ -34,12 +34,12 @@ function App() {
     };
   }, []);
 
-  const handleSelectColor = (color: 'red' | 'yellow' | 'blue') => {
+  const handleSelectColor = (color: TileColor) => {
     engineRef.current?.selectColor(color);
   };
 
-  const handleRotate = (dir: number) => {
-    engineRef.current?.setDirection(dir as Direction);
+  const handleRotate = (dir: Direction) => {
+    engineRef.current?.setDirection(dir);
   };
 
   const handleSpeedChange = (value: number) => {

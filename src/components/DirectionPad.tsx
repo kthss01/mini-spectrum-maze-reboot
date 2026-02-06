@@ -1,12 +1,18 @@
-const DIRECTIONS = [
-  { dir: 0, className: 'dir-north', label: 'North' },
-  { dir: 1, className: 'dir-east', label: 'East' },
-  { dir: 2, className: 'dir-south', label: 'South' },
-  { dir: 3, className: 'dir-west', label: 'West' },
-] as const;
+import { DIRECTION, type Direction } from '../types/game';
+
+const DIRECTIONS: ReadonlyArray<{
+  dir: Direction;
+  className: string;
+  label: string;
+}> = [
+  { dir: DIRECTION.NORTH, className: 'dir-north', label: 'North' },
+  { dir: DIRECTION.EAST, className: 'dir-east', label: 'East' },
+  { dir: DIRECTION.SOUTH, className: 'dir-south', label: 'South' },
+  { dir: DIRECTION.WEST, className: 'dir-west', label: 'West' },
+];
 
 type DirectionPadProps = {
-  onRotate: (dir: number) => void;
+  onRotate: (dir: Direction) => void;
 };
 
 export function DirectionPad({ onRotate }: DirectionPadProps) {

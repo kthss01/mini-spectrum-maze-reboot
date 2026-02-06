@@ -42,6 +42,12 @@ npm run preview
 > 기존 `index.html` 기반 import map 직접 실행 방식은 **deprecated** 입니다.
 > 팀 개발/검증은 Vite + npm 스크립트 워크플로우를 기준으로 진행하세요.
 
+## TypeScript 마이그레이션 상태
+
+- `src` 디렉터리의 런타임 코드가 `.ts/.tsx`로 완전 전환되었습니다.
+- `tsconfig.json`에서 `allowJs`를 비활성화해 JS 소스 혼용을 방지합니다.
+- 현재 기준 `src` 내 `.js/.jsx` 파일은 없습니다.
+
 ## GitHub Pages 배포 (GitHub Actions)
 
 이 저장소에는 GitHub Pages 자동 배포 워크플로우가 포함되어 있습니다.
@@ -66,6 +72,6 @@ npm run preview
 - `src/camera.ts`: Three.js scene/camera/renderer 구성
 - `src/config.ts`: 상수 설정값
 - `src/types/game.ts`: 게임 핵심 타입 정의
-- `src/utils.js`: easing 유틸
+- `src/utils.ts`: easing 유틸
 - `docs/migration-plan.md`: 점진 마이그레이션 단계/완료 기준
 - `docs/concept.md`: 컨셉 및 개선 과제 정리

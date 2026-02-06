@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { CFG, PLAYER_COLORS } from "./config";
-import { easeInOut } from "./utils.js";
+import { easeInOut } from "./utils";
 import { DIRECTION, type Direction, type PlayerState } from "./types/game";
 
 type LevelLike = {

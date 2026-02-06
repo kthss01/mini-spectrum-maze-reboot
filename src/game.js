@@ -7,7 +7,14 @@ import { createLevel } from "./level.js";
 import { createPlayer } from "./player.js";
 import { bindInput } from "./input.js";
 
-export function createGame({ canvasHost } = {}) {
+export function createGame({
+	canvasHost,
+	selectedColor: initialSelectedColor = "red",
+	speed: initialSpeed = 1,
+	angle: initialAngle = 60,
+	onClearedChange,
+	onSelectedColorChange,
+} = {}) {
 	const MAZE_WIDTH = 31;
 	const MAZE_HEIGHT = 33;
 
@@ -90,14 +97,13 @@ export function createGame({ canvasHost } = {}) {
 	window.addEventListener("contextmenu", preventContextMenu);
 	cleanups.push(() => window.removeEventListener("contextmenu", preventContextMenu));
 
-	const toast = document.getElementById("toast");
 	let cleared = false;
 	function setCleared(v) {
 		cleared = v;
-		if (toast) toast.style.display = v ? "block" : "none";
+		onClearedChange && onClearedChange(v);
 	}
 
-	let selectedColor = "red";
+	let selectedColor = initialSelectedColor;
 
 	// highlight materials
 	const highlightMaterials = {};
@@ -148,55 +154,37 @@ export function createGame({ canvasHost } = {}) {
 	let colorAnimationStart = null;
 	const colorAnimationDuration = 0.4;
 
-	document.querySelectorAll(".color-btn").forEach((btn) => {
-		const onClick = () => {
-			const color = btn.getAttribute("data-color");
-			selectedColor = color;
-			playerColor = color;
+	function selectColor(color) {
+		selectedColor = color;
+		playerColor = color;
+		onSelectedColorChange && onSelectedColorChange(color);
 
-			colorStart = player.mesh.material.color.clone();
-			colorTarget = new THREE.Color(PLAYER_COLORS[color]);
-			colorAnimationStart = performance.now();
-		};
+		colorStart = player.mesh.material.color.clone();
+		colorTarget = new THREE.Color(PLAYER_COLORS[color]);
+		colorAnimationStart = performance.now();
+	}
 
-		btn.addEventListener("click", onClick);
-		cleanups.push(() => btn.removeEventListener("click", onClick));
-	});
+	function setDirection(dir) {
+		player.setDirection(dir);
+		updateVisibilityTargets();
+		highlightAheadTile();
+	}
 
-	document.querySelectorAll(".arrow-btn").forEach((btn) => {
-		const onClick = () => {
-			const dir = parseInt(btn.getAttribute("data-dir"), 10);
-			player.setDirection(dir);
-			updateVisibilityTargets();
-			highlightAheadTile();
-		};
-
-		btn.addEventListener("click", onClick);
-		cleanups.push(() => btn.removeEventListener("click", onClick));
-	});
-
-	const speedSlider = document.getElementById("speedSlider");
 	const baseMoveInterval = 0.6;
 	const baseMoveDuration = 0.18;
-	let moveInterval = baseMoveInterval * parseFloat(speedSlider?.value ?? 1);
-	CFG.moveDuration = baseMoveDuration * parseFloat(speedSlider?.value ?? 1);
+	let moveInterval = baseMoveInterval * initialSpeed;
+	CFG.moveDuration = baseMoveDuration * initialSpeed;
 
-	const onSpeedInput = () => {
-		const val = parseFloat(speedSlider?.value ?? 1);
-		moveInterval = baseMoveInterval * val;
-		CFG.moveDuration = baseMoveDuration * val;
-	};
-	speedSlider?.addEventListener("input", onSpeedInput);
-	cleanups.push(() => speedSlider?.removeEventListener("input", onSpeedInput));
+	function setSpeedMultiplier(speedMultiplier) {
+		moveInterval = baseMoveInterval * speedMultiplier;
+		CFG.moveDuration = baseMoveDuration * speedMultiplier;
+	}
 
-	const angleSlider = document.getElementById("angleSlider");
-	let viewAngleDeg = parseFloat(angleSlider?.value ?? 60);
-	const onAngleInput = () => {
-		viewAngleDeg = parseFloat(angleSlider?.value ?? 60);
+	let viewAngleDeg = initialAngle;
+	function setViewAngle(angleDeg) {
+		viewAngleDeg = angleDeg;
 		updateVisibilityTargets();
-	};
-	angleSlider?.addEventListener("input", onAngleInput);
-	cleanups.push(() => angleSlider?.removeEventListener("input", onAngleInput));
+	}
 
 	let timeSinceLastMove = 0;
 
@@ -245,11 +233,7 @@ export function createGame({ canvasHost } = {}) {
 	function restart() {
 		setCleared(false);
 		player.reset();
-		selectedColor = "red";
-		playerColor = "red";
-		colorStart = player.mesh.material.color.clone();
-		colorTarget = new THREE.Color(PLAYER_COLORS.red);
-		colorAnimationStart = performance.now();
+		selectColor("red");
 		timeSinceLastMove = 0;
 		updateVisibilityTargets();
 		highlightAheadTile();
@@ -259,16 +243,10 @@ export function createGame({ canvasHost } = {}) {
 		isLocked: () => cleared || player.state.isMoving,
 		onRestart: restart,
 		onRotate: (dir) => {
-			player.setDirection(dir);
-			updateVisibilityTargets();
-			highlightAheadTile();
+			setDirection(dir);
 		},
 		onColorKey: (color) => {
-			selectedColor = color;
-			playerColor = color;
-			colorStart = player.mesh.material.color.clone();
-			colorTarget = new THREE.Color(PLAYER_COLORS[color]);
-			colorAnimationStart = performance.now();
+			selectColor(color);
 		},
 	});
 	cleanups.push(unbindInput);
@@ -359,9 +337,17 @@ export function createGame({ canvasHost } = {}) {
 	}
 
 	highlightAheadTile();
+	setSpeedMultiplier(initialSpeed);
+	setViewAngle(initialAngle);
+	selectColor(initialSelectedColor);
 	loop();
 
 	return {
+		setDirection,
+		selectColor,
+		setSpeedMultiplier,
+		setViewAngle,
+		restart,
 		destroy() {
 			if (rafId) cancelAnimationFrame(rafId);
 			clearHighlight();

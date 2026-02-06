@@ -7,7 +7,7 @@ import { createLevel } from "./level.js";
 import { createPlayer } from "./player.js";
 import { bindInput } from "./input.js";
 
-function createGame() {
+export function createGame({ canvasHost } = {}) {
 	const MAZE_WIDTH = 31;
 	const MAZE_HEIGHT = 33;
 
@@ -37,7 +37,7 @@ function createGame() {
 	CFG.viewSize = viewSize;
 	CFG.radius = radius;
 
-	const { scene, renderer, camera } = createThreeCore();
+	const { scene, renderer, camera, destroy: destroyThreeCore } = createThreeCore({ canvasHost });
 	const level = createLevel(scene, map, colorMap);
 	const player = createPlayer(scene, level);
 
@@ -81,13 +81,20 @@ function createGame() {
 	controls.maxZoom = 4;
 	controls.update();
 
-	window.addEventListener("contextmenu", (e) => e.preventDefault());
+	const cleanups = [];
+
+	function preventContextMenu(e) {
+		e.preventDefault();
+	}
+
+	window.addEventListener("contextmenu", preventContextMenu);
+	cleanups.push(() => window.removeEventListener("contextmenu", preventContextMenu));
 
 	const toast = document.getElementById("toast");
 	let cleared = false;
 	function setCleared(v) {
 		cleared = v;
-		toast.style.display = v ? "block" : "none";
+		if (toast) toast.style.display = v ? "block" : "none";
 	}
 
 	let selectedColor = "red";
@@ -142,7 +149,7 @@ function createGame() {
 	const colorAnimationDuration = 0.4;
 
 	document.querySelectorAll(".color-btn").forEach((btn) => {
-		btn.addEventListener("click", () => {
+		const onClick = () => {
 			const color = btn.getAttribute("data-color");
 			selectedColor = color;
 			playerColor = color;
@@ -150,36 +157,46 @@ function createGame() {
 			colorStart = player.mesh.material.color.clone();
 			colorTarget = new THREE.Color(PLAYER_COLORS[color]);
 			colorAnimationStart = performance.now();
-		});
+		};
+
+		btn.addEventListener("click", onClick);
+		cleanups.push(() => btn.removeEventListener("click", onClick));
 	});
 
 	document.querySelectorAll(".arrow-btn").forEach((btn) => {
-		btn.addEventListener("click", () => {
+		const onClick = () => {
 			const dir = parseInt(btn.getAttribute("data-dir"), 10);
 			player.setDirection(dir);
 			updateVisibilityTargets();
 			highlightAheadTile();
-		});
+		};
+
+		btn.addEventListener("click", onClick);
+		cleanups.push(() => btn.removeEventListener("click", onClick));
 	});
 
 	const speedSlider = document.getElementById("speedSlider");
 	const baseMoveInterval = 0.6;
 	const baseMoveDuration = 0.18;
-	let moveInterval = baseMoveInterval * parseFloat(speedSlider.value);
-	CFG.moveDuration = baseMoveDuration * parseFloat(speedSlider.value);
+	let moveInterval = baseMoveInterval * parseFloat(speedSlider?.value ?? 1);
+	CFG.moveDuration = baseMoveDuration * parseFloat(speedSlider?.value ?? 1);
 
-	speedSlider.addEventListener("input", () => {
-		const val = parseFloat(speedSlider.value);
+	const onSpeedInput = () => {
+		const val = parseFloat(speedSlider?.value ?? 1);
 		moveInterval = baseMoveInterval * val;
 		CFG.moveDuration = baseMoveDuration * val;
-	});
+	};
+	speedSlider?.addEventListener("input", onSpeedInput);
+	cleanups.push(() => speedSlider?.removeEventListener("input", onSpeedInput));
 
 	const angleSlider = document.getElementById("angleSlider");
-	let viewAngleDeg = parseFloat(angleSlider.value);
-	angleSlider.addEventListener("input", () => {
-		viewAngleDeg = parseFloat(angleSlider.value);
+	let viewAngleDeg = parseFloat(angleSlider?.value ?? 60);
+	const onAngleInput = () => {
+		viewAngleDeg = parseFloat(angleSlider?.value ?? 60);
 		updateVisibilityTargets();
-	});
+	};
+	angleSlider?.addEventListener("input", onAngleInput);
+	cleanups.push(() => angleSlider?.removeEventListener("input", onAngleInput));
 
 	let timeSinceLastMove = 0;
 
@@ -238,7 +255,7 @@ function createGame() {
 		highlightAheadTile();
 	}
 
-	bindInput({
+	const unbindInput = bindInput({
 		isLocked: () => cleared || player.state.isMoving,
 		onRestart: restart,
 		onRotate: (dir) => {
@@ -254,6 +271,7 @@ function createGame() {
 			colorAnimationStart = performance.now();
 		},
 	});
+	cleanups.push(unbindInput);
 
 	const clock = new THREE.Clock();
 
@@ -331,8 +349,10 @@ function createGame() {
 		highlightAheadTile();
 	}
 
+	let rafId = 0;
+
 	function loop() {
-		requestAnimationFrame(loop);
+		rafId = requestAnimationFrame(loop);
 		const dt = clock.getDelta();
 		update(dt);
 		renderer.render(scene, camera);
@@ -340,6 +360,14 @@ function createGame() {
 
 	highlightAheadTile();
 	loop();
-}
 
-createGame();
+	return {
+		destroy() {
+			if (rafId) cancelAnimationFrame(rafId);
+			clearHighlight();
+			cleanups.forEach((cleanup) => cleanup && cleanup());
+						controls.dispose();
+			destroyThreeCore();
+		},
+	};
+}

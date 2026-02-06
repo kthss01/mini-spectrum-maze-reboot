@@ -10,15 +10,15 @@ export function computeCameraSettings(map) {
 	return { viewSize, radius };
 }
 
-export function createThreeCore() {
+export function createThreeCore({ canvasHost } = {}) {
+	const host = canvasHost ?? document.body;
+
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x0f1115);
 
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
-	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.shadowMap.enabled = true;
-	document.body.appendChild(renderer.domElement);
+	host.appendChild(renderer.domElement);
 
 	scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 	const dir = new THREE.DirectionalLight(0xffffff, 0.95);
@@ -30,8 +30,19 @@ export function createThreeCore() {
 	const camera = new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 200);
 	camera.zoom = CFG.zoom;
 
+	function getSize() {
+		if (host === document.body) {
+			return { width: window.innerWidth, height: window.innerHeight };
+		}
+		return {
+			width: host.clientWidth || window.innerWidth,
+			height: host.clientHeight || window.innerHeight,
+		};
+	}
+
 	function updateCamera() {
-		const aspect = window.innerWidth / window.innerHeight;
+		const { width, height } = getSize();
+		const aspect = width / height;
 		const v = CFG.viewSize;
 		camera.left = -v * aspect;
 		camera.right = v * aspect;
@@ -49,12 +60,21 @@ export function createThreeCore() {
 		camera.updateProjectionMatrix();
 	}
 
-	updateCamera();
-	window.addEventListener("resize", () => {
-		renderer.setSize(window.innerWidth, window.innerHeight);
+	function resizeRenderer() {
+		const { width, height } = getSize();
 		renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+		renderer.setSize(width, height);
 		updateCamera();
-	});
+	}
 
-	return { scene, renderer, camera, updateCamera };
+	resizeRenderer();
+	window.addEventListener("resize", resizeRenderer);
+
+	function destroy() {
+		window.removeEventListener("resize", resizeRenderer);
+		renderer.dispose();
+		renderer.domElement.remove();
+	}
+
+	return { scene, renderer, camera, updateCamera, destroy };
 }

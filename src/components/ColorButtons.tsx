@@ -1,13 +1,15 @@
-const COLORS = [
+import type { TileColor } from '../types/game';
+
+const COLORS: ReadonlyArray<{ name: TileColor; label: string }> = [
   { name: 'red', label: 'Red' },
   { name: 'yellow', label: 'Yellow' },
   { name: 'blue', label: 'Blue' },
-] as const;
+];
 
-type ColorName = (typeof COLORS)[number]['name'];
+type ColorName = TileColor;
 
 type ColorButtonsProps = {
-  selectedColor: string;
+  selectedColor: TileColor;
   onSelectColor: (color: ColorName) => void;
 };
 

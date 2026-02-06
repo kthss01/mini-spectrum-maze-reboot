@@ -1,12 +1,13 @@
 import { ColorButtons } from './ColorButtons';
 import { DirectionPad } from './DirectionPad';
+import type { Direction, TileColor } from '../types/game';
 
 type GameUIProps = {
-  selectedColor: string;
+  selectedColor: TileColor;
   speed: number;
   angle: number;
-  onSelectColor: (color: 'red' | 'yellow' | 'blue') => void;
-  onRotate: (dir: number) => void;
+  onSelectColor: (color: TileColor) => void;
+  onRotate: (dir: Direction) => void;
   onSpeedChange: (value: number) => void;
   onAngleChange: (value: number) => void;
 };

@@ -1,7 +1,14 @@
 export function bindInput({ onRestart, isLocked, onRotate, onColorKey }) {
 	function onKeyDown(e) {
-		if (isLocked()) return;
 		const key = e.key.toLowerCase();
+
+		if (key === "r") {
+			onRestart && onRestart();
+			return;
+		}
+
+		if (isLocked()) return;
+
 		if (key === "w") {
 			onRotate && onRotate(0);
 		} else if (key === "d") {
@@ -10,8 +17,6 @@ export function bindInput({ onRestart, isLocked, onRotate, onColorKey }) {
 			onRotate && onRotate(2);
 		} else if (key === "a") {
 			onRotate && onRotate(3);
-		} else if (key === "r") {
-			onRestart && onRestart();
 		} else if (key === "1") {
 			onColorKey && onColorKey("red");
 		} else if (key === "2") {

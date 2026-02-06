@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { mountGame } from './gameAdapter';
+import { GameEngine } from './engine/GameEngine';
+import type { Direction } from './types/game';
 import { GameUI } from './components/GameUI';
 import { Toast } from './components/Toast';
 
 function App() {
   const canvasHostRef = useRef<HTMLDivElement>(null);
-  const gameRef = useRef<ReturnType<typeof mountGame> | null>(null);
+  const engineRef = useRef<GameEngine | null>(null);
 
   const [cleared, setCleared] = useState(false);
   const [selectedColor, setSelectedColor] = useState<'red' | 'yellow' | 'blue'>('red');
@@ -15,39 +16,40 @@ function App() {
   useEffect(() => {
     if (!canvasHostRef.current) return;
 
-    const game = mountGame({
+    const engine = new GameEngine({
       canvasHost: canvasHostRef.current,
       selectedColor,
       speed,
       angle,
       onClearedChange: setCleared,
-      onSelectedColorChange: (color) => setSelectedColor(color),
+      onSelectedColorChange: setSelectedColor,
     });
 
-    gameRef.current = game;
+    engine.init();
+    engineRef.current = engine;
 
     return () => {
-      gameRef.current?.destroy?.();
-      gameRef.current = null;
+      engineRef.current?.dispose();
+      engineRef.current = null;
     };
   }, []);
 
   const handleSelectColor = (color: 'red' | 'yellow' | 'blue') => {
-    gameRef.current?.selectColor(color);
+    engineRef.current?.selectColor(color);
   };
 
   const handleRotate = (dir: number) => {
-    gameRef.current?.setDirection(dir);
+    engineRef.current?.setDirection(dir as Direction);
   };
 
   const handleSpeedChange = (value: number) => {
     setSpeed(value);
-    gameRef.current?.setSpeedMultiplier(value);
+    engineRef.current?.setSpeedMultiplier(value);
   };
 
   const handleAngleChange = (value: number) => {
     setAngle(value);
-    gameRef.current?.setViewAngle(value);
+    engineRef.current?.setViewAngle(value);
   };
 
   return (

@@ -141,27 +141,17 @@ export class GameEngine {
       this.timeSinceLastMove += dt;
     }
 
-    if (
-      !this.player.state.isMoving &&
-      !this.cleared &&
-      this.playerColor === this.selectedColor &&
-      ['red', 'yellow', 'blue'].includes(this.selectedColor)
-    ) {
-      if (this.timeSinceLastMove >= this.moveInterval) {
-        const dirIdx = this.player.state.dir;
-        const { dx, dy } = this.dirToDelta[dirIdx];
-        const nx = this.player.state.gx + dx;
-        const ny = this.player.state.gy + dy;
+    if (!this.player.state.isMoving && !this.cleared && this.timeSinceLastMove >= this.moveInterval) {
+      const dirIdx = this.player.state.dir;
+      const { dx, dy } = this.dirToDelta[dirIdx];
+      const nx = this.player.state.gx + dx;
+      const ny = this.player.state.gy + dy;
 
-        if (this.level.canWalk(nx, ny)) {
-          const tileColor = this.level.colorMap[ny][nx] || 'gray';
-          if (tileColor === this.selectedColor || tileColor === 'gray') {
-            const started = this.player.tryMove(dx, dy);
-            if (started) {
-              this.timeSinceLastMove = 0;
-              this.updateVisibilityTargets();
-            }
-          }
+      if (this.canAutoMove(nx, ny)) {
+        const started = this.player.tryMove(dx, dy);
+        if (started) {
+          this.timeSinceLastMove = 0;
+          this.updateVisibilityTargets();
         }
       }
     }
@@ -256,6 +246,14 @@ export class GameEngine {
     this.timeSinceLastMove = 0;
     this.updateVisibilityTargets();
     this.highlightAheadTile();
+  }
+
+  private canAutoMove(nx: number, ny: number): boolean {
+    if (!this.level) return false;
+    if (!this.level.canWalk(nx, ny)) return false;
+
+    const tileColor = this.level.colorMap[ny][nx] || 'gray';
+    return tileColor === this.selectedColor || tileColor === 'gray';
   }
 
   private setCleared(v: boolean) {

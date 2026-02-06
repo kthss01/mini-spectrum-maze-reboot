@@ -1,5 +1,14 @@
-export function bindInput({ onRestart, isLocked, onRotate, onColorKey }) {
-	function onKeyDown(e) {
+import { DIRECTION, type Direction, type TileColor } from "./types/game";
+
+type InputHandlers = {
+	onRestart?: () => void;
+	isLocked: () => boolean;
+	onRotate?: (dir: Direction) => void;
+	onColorKey?: (color: TileColor) => void;
+};
+
+export function bindInput({ onRestart, isLocked, onRotate, onColorKey }: InputHandlers) {
+	function onKeyDown(e: KeyboardEvent) {
 		const key = e.key.toLowerCase();
 
 		if (key === "r") {
@@ -10,13 +19,13 @@ export function bindInput({ onRestart, isLocked, onRotate, onColorKey }) {
 		if (isLocked()) return;
 
 		if (key === "w") {
-			onRotate && onRotate(0);
+			onRotate && onRotate(DIRECTION.NORTH);
 		} else if (key === "d") {
-			onRotate && onRotate(1);
+			onRotate && onRotate(DIRECTION.EAST);
 		} else if (key === "s") {
-			onRotate && onRotate(2);
+			onRotate && onRotate(DIRECTION.SOUTH);
 		} else if (key === "a") {
-			onRotate && onRotate(3);
+			onRotate && onRotate(DIRECTION.WEST);
 		} else if (key === "1") {
 			onColorKey && onColorKey("red");
 		} else if (key === "2") {

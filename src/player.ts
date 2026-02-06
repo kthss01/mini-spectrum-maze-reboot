@@ -1,13 +1,17 @@
 import * as THREE from "three";
-import { CFG, PLAYER_COLORS } from "./config.js";
+import { CFG, PLAYER_COLORS } from "./config";
 import { easeInOut } from "./utils.js";
+import { DIRECTION, type Direction, type PlayerState } from "./types/game";
 
-export function createPlayer(scene, level) {
-	const playerGeo = new THREE.BoxGeometry(
-		CFG.tile * 0.45,
-		1.2,
-		CFG.tile * 0.45
-	);
+type LevelLike = {
+	group: THREE.Group;
+	start: { x: number; y: number };
+	gridToWorld: (gx: number, gy: number) => THREE.Vector3;
+	canWalk: (gx: number, gy: number) => boolean;
+};
+
+export function createPlayer(_scene: THREE.Scene, level: LevelLike) {
+	const playerGeo = new THREE.BoxGeometry(CFG.tile * 0.45, 1.2, CFG.tile * 0.45);
 	const playerMat = new THREE.MeshStandardMaterial({
 		color: PLAYER_COLORS.white,
 		roughness: 0.5,
@@ -20,14 +24,14 @@ export function createPlayer(scene, level) {
 	mesh.castShadow = true;
 	level.group.add(mesh);
 
-	const state = {
+	const state: PlayerState = {
 		gx: level.start.x,
 		gy: level.start.y,
 		isMoving: false,
 		t: 0,
 		from: new THREE.Vector3(),
 		to: new THREE.Vector3(),
-		dir: 0,
+		dir: DIRECTION.NORTH,
 	};
 
 	function snapToGrid() {
@@ -35,12 +39,13 @@ export function createPlayer(scene, level) {
 		mesh.position.set(p.x, CFG.playerY, p.z);
 	}
 
-	function setDirection(newDir) {
-		state.dir = ((newDir % 4) + 4) % 4;
+	function setDirection(newDir: number) {
+		const normalized = (((newDir % 4) + 4) % 4) as Direction;
+		state.dir = normalized;
 		mesh.rotation.y = state.dir * (Math.PI / 2);
 	}
 
-	function beginMoveTo(nx, ny) {
+	function beginMoveTo(nx: number, ny: number) {
 		state.isMoving = true;
 		state.t = 0;
 		state.from.copy(mesh.position);
@@ -50,7 +55,7 @@ export function createPlayer(scene, level) {
 		state.gy = ny;
 	}
 
-	function tryMove(dx, dy) {
+	function tryMove(dx: number, dy: number) {
 		if (state.isMoving) return false;
 		const nx = state.gx + dx;
 		const ny = state.gy + dy;
@@ -59,7 +64,7 @@ export function createPlayer(scene, level) {
 		return true;
 	}
 
-	function update(dt) {
+	function update(dt: number) {
 		if (!state.isMoving) return false;
 		state.t += dt / CFG.moveDuration;
 		const a = Math.min(state.t, 1);
@@ -78,17 +83,10 @@ export function createPlayer(scene, level) {
 		state.isMoving = false;
 		state.t = 0;
 		snapToGrid();
-		setDirection(0);
+		setDirection(DIRECTION.NORTH);
 	}
 
 	snapToGrid();
-	setDirection(0);
-	return {
-		mesh,
-		state,
-		tryMove,
-		update,
-		reset,
-		setDirection,
-	};
+	setDirection(DIRECTION.NORTH);
+	return { mesh, state, tryMove, update, reset, setDirection };
 }

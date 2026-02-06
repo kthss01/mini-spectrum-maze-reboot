@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { CFG, PLAYER_COLORS, COLOR_VALUES } from "./config.js";
-import { generateMaze, assignTileColors } from "./maze.js";
-import { computeCameraSettings, createThreeCore } from "./camera.js";
-import { createLevel } from "./level.js";
-import { createPlayer } from "./player.js";
-import { bindInput } from "./input.js";
+import { CFG, PLAYER_COLORS, COLOR_VALUES } from "./config";
+import { generateMaze, assignTileColors } from "./maze";
+import { computeCameraSettings, createThreeCore } from "./camera";
+import { createLevel } from "./level";
+import { createPlayer } from "./player";
+import { bindInput } from "./input";
 
 export function createGame({
 	canvasHost,

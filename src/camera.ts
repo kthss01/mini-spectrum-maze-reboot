@@ -1,7 +1,8 @@
 import * as THREE from "three";
-import { CFG } from "./config.js";
+import { CFG } from "./config";
+import type { MazeMap } from "./types/game";
 
-export function computeCameraSettings(map) {
+export function computeCameraSettings(map: MazeMap) {
 	const rows = map.length;
 	const cols = map[0].length;
 	const maxDim = Math.max(rows, cols);
@@ -10,7 +11,7 @@ export function computeCameraSettings(map) {
 	return { viewSize, radius };
 }
 
-export function createThreeCore({ canvasHost } = {}) {
+export function createThreeCore({ canvasHost }: { canvasHost?: HTMLElement } = {}) {
 	const host = canvasHost ?? document.body;
 
 	const scene = new THREE.Scene();

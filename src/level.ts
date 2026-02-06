@@ -1,7 +1,10 @@
 import * as THREE from "three";
-import { CFG, COLOR_VALUES } from "./config.js";
+import { CFG, COLOR_VALUES } from "./config";
+import type { ColorMap, ColorName, GridPos, MazeMap } from "./types/game";
 
-export function createLevel(scene, map, colorMap) {
+type TileMesh = THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>;
+
+export function createLevel(scene: THREE.Scene, map: MazeMap, colorMap: ColorMap) {
 	const rows = map.length;
 	const cols = map[0].length;
 
@@ -11,19 +14,15 @@ export function createLevel(scene, map, colorMap) {
 	const offsetX = (cols - 1) * CFG.tile * 0.5;
 	const offsetZ = (rows - 1) * CFG.tile * 0.5;
 
-	function gridToWorld(gx, gy) {
-		return new THREE.Vector3(
-			gx * CFG.tile - offsetX,
-			0,
-			gy * CFG.tile - offsetZ
-		);
+	function gridToWorld(gx: number, gy: number) {
+		return new THREE.Vector3(gx * CFG.tile - offsetX, 0, gy * CFG.tile - offsetZ);
 	}
 
-	function canWalk(gx, gy) {
+	function canWalk(gx: number, gy: number) {
 		return map[gy]?.[gx] != null && map[gy][gx] !== 1;
 	}
 
-	function findTile(value) {
+	function findTile(value: number): GridPos | null {
 		for (let y = 0; y < rows; y++) {
 			for (let x = 0; x < cols; x++) {
 				if (map[y][x] === value) return { x, y };
@@ -35,25 +34,21 @@ export function createLevel(scene, map, colorMap) {
 	const start = findTile(2) ?? { x: 1, y: 1 };
 	const goal = findTile(3) ?? { x: cols - 2, y: rows - 2 };
 
-	const baseMats = {};
-	for (const name in COLOR_VALUES) {
-		const m = new THREE.MeshStandardMaterial({
-			color: COLOR_VALUES[name],
-			roughness: 0.95,
-			metalness: 0.0,
-			transparent: true,
-			opacity: 1,
-		});
-		baseMats[name] = m;
-	}
+	const baseMats: Record<ColorName, THREE.MeshStandardMaterial> = {
+		gray: new THREE.MeshStandardMaterial({ color: COLOR_VALUES.gray, roughness: 0.95, metalness: 0.0, transparent: true, opacity: 1 }),
+		red: new THREE.MeshStandardMaterial({ color: COLOR_VALUES.red, roughness: 0.95, metalness: 0.0, transparent: true, opacity: 1 }),
+		yellow: new THREE.MeshStandardMaterial({ color: COLOR_VALUES.yellow, roughness: 0.95, metalness: 0.0, transparent: true, opacity: 1 }),
+		blue: new THREE.MeshStandardMaterial({ color: COLOR_VALUES.blue, roughness: 0.95, metalness: 0.0, transparent: true, opacity: 1 }),
+		white: new THREE.MeshStandardMaterial({ color: COLOR_VALUES.white, roughness: 0.95, metalness: 0.0, transparent: true, opacity: 1 }),
+	};
 
 	const pillarHeight = CFG.tile * rows * 2;
 
 	const topGeo = new THREE.BoxGeometry(CFG.tile, CFG.floorH, CFG.tile);
 	const pillarGeo = new THREE.BoxGeometry(CFG.tile, pillarHeight, CFG.tile);
 
-	const floors = [];
-	const pillars = [];
+	const floors: TileMesh[] = [];
+	const pillars: TileMesh[] = [];
 
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
@@ -61,14 +56,13 @@ export function createLevel(scene, map, colorMap) {
 			if (v === 1) continue;
 
 			const p = gridToWorld(x, y);
-			const colorName = colorMap[y][x] ?? "gray";
+			const colorName = (colorMap[y][x] ?? "gray") as ColorName;
 
-			// Mesh마다 material을 clone해서 개별 인스턴스로 만든다
 			const topMat = (baseMats[colorName] || baseMats.gray).clone();
 			topMat.transparent = true;
 			topMat.opacity = 1;
 
-			const topMesh = new THREE.Mesh(topGeo, topMat);
+			const topMesh: TileMesh = new THREE.Mesh(topGeo, topMat);
 			topMesh.position.set(p.x, -CFG.floorH * 0.5, p.z);
 			topMesh.receiveShadow = true;
 
@@ -76,7 +70,7 @@ export function createLevel(scene, map, colorMap) {
 			pillarMat.transparent = true;
 			pillarMat.opacity = 1;
 
-			const pillarMesh = new THREE.Mesh(pillarGeo, pillarMat);
+			const pillarMesh: TileMesh = new THREE.Mesh(pillarGeo, pillarMat);
 			pillarMesh.position.set(p.x, -CFG.floorH - pillarHeight * 0.5, p.z);
 			pillarMesh.castShadow = true;
 			pillarMesh.receiveShadow = true;
@@ -99,15 +93,5 @@ export function createLevel(scene, map, colorMap) {
 		}
 	}
 
-	return {
-		group,
-		map,
-		colorMap,
-		floors,
-		pillars,
-		start,
-		goal,
-		gridToWorld,
-		canWalk,
-	};
+	return { group, map, colorMap, floors, pillars, start, goal, gridToWorld, canWalk };
 }

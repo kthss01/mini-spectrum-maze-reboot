@@ -258,6 +258,9 @@ export class GameEngine {
 
   private setCleared(v: boolean) {
     this.cleared = v;
+    if (v) {
+      this.clearHighlight();
+    }
     this.onClearedChange?.(v);
   }
 
@@ -393,9 +396,7 @@ export class GameEngine {
     const nx = this.player.state.gx + dx;
     const ny = this.player.state.gy + dy;
 
-    const tile = this.level.floors.find(
-      (floor) => floor.userData.gridX === nx && floor.userData.gridY === ny,
-    );
+    const tile = this.level.floorByGrid.get(`${nx},${ny}`);
 
     if (tile) {
       const colorName = tile.userData.color;

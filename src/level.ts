@@ -48,6 +48,7 @@ export function createLevel(scene: THREE.Scene, map: MazeMap, colorMap: ColorMap
 	const pillarGeo = new THREE.BoxGeometry(CFG.tile, pillarHeight, CFG.tile);
 
 	const floors: TileMesh[] = [];
+	const floorByGrid = new Map<string, TileMesh>();
 	const pillars: TileMesh[] = [];
 
 	for (let y = 0; y < rows; y++) {
@@ -86,6 +87,7 @@ export function createLevel(scene: THREE.Scene, map: MazeMap, colorMap: ColorMap
 			pillarMesh.userData.targetOpacity = 1;
 
 			floors.push(topMesh);
+			floorByGrid.set(`${x},${y}`, topMesh);
 			pillars.push(pillarMesh);
 
 			group.add(topMesh);
@@ -93,5 +95,5 @@ export function createLevel(scene: THREE.Scene, map: MazeMap, colorMap: ColorMap
 		}
 	}
 
-	return { group, map, colorMap, floors, pillars, start, goal, gridToWorld, canWalk };
+	return { group, map, colorMap, floors, floorByGrid, pillars, start, goal, gridToWorld, canWalk };
 }

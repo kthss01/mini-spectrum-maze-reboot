@@ -1,4 +1,6 @@
-export const CFG = {
+import type { ColorName, GameConfig } from "./types/game";
+
+export const CFG: GameConfig = {
 	viewSize: 18,
 	zoom: 1.25,
 	tile: 2.2,
@@ -9,7 +11,7 @@ export const CFG = {
 	radius: 40,
 };
 
-export const COLOR_VALUES = {
+export const COLOR_VALUES: Record<ColorName | "black", number> = {
 	gray: 0x1e2430,
 	red: 0xd95763,
 	yellow: 0xffd35c,
@@ -18,7 +20,7 @@ export const COLOR_VALUES = {
 	black: 0x000000,
 };
 
-export const PLAYER_COLORS = {
+export const PLAYER_COLORS: Record<ColorName, number> = {
 	gray: 0xe8edf7,
 	red: 0xd95763,
 	yellow: 0xffd35c,

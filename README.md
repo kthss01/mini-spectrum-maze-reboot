@@ -1,6 +1,6 @@
 # mini-spectrum-maze-reboot
 
-빛의 색을 전환하며 길을 찾는 3D 미로 퍼즐 프로토타입입니다. Three.js와 순수 JavaScript(모듈)로 동작합니다.
+빛의 색을 전환하며 길을 찾는 3D 미로 퍼즐 프로토타입입니다. React + Three.js + Vite로 구성되어 있습니다.
 
 ## 현재 구현 상태
 
@@ -22,17 +22,32 @@
 - 시야각: `View Angle` 슬라이더
 - 카메라 줌: 마우스 휠(또는 트랙패드 줌)
 
-## 실행 방법
+## 로컬 실행
 
-별도 빌드 과정 없이 정적 파일로 실행됩니다.
+```bash
+npm install
+npm run dev
+```
 
-1. 프로젝트 루트에서 정적 서버를 실행합니다. (예: `python -m http.server 8000`)
-2. 브라우저에서 `http://localhost:8000` 접속
-3. 게임 시작
+브라우저에서 Vite가 출력한 로컬 주소(`http://localhost:5173` 등)로 접속하면 됩니다.
+
+## GitHub Pages 배포 (GitHub Actions)
+
+이 저장소에는 GitHub Pages 자동 배포 워크플로우가 포함되어 있습니다.
+
+1. GitHub 저장소 **Settings → Pages**에서 **Build and deployment / Source**를 **GitHub Actions**로 설정
+2. `main` 브랜치에 푸시
+3. Actions 탭에서 `Deploy static site to GitHub Pages` 워크플로우가 실행
+4. 완료 후 Pages URL에서 정적 사이트 확인
+
+워크플로우 파일: `.github/workflows/deploy-pages.yml`
 
 ## 구조
 
-- `index.html`: UI, importmap, 스타일, 게임 엔트리 연결
+- `index.html`: 앱 엔트리 연결
+- `src/main.tsx`: React 마운트
+- `src/App.tsx`: UI/게임 호스트 컴포넌트
+- `src/gameAdapter.ts`: 게임 인스턴스 마운트/해제
 - `src/game.js`: 게임 루프/상태/입력 연결/시야/자동 이동 핵심 로직
 - `src/maze.js`: 미로 생성 및 타일 색 분배
 - `src/level.js`: 타일/기둥 메쉬 생성, 월드 좌표 변환, 이동 가능 판정
@@ -42,13 +57,3 @@
 - `src/config.js`: 상수 설정값
 - `src/utils.js`: easing 유틸
 - `docs/concept.md`: 컨셉 및 개선 과제 정리
-
-## 현재 확인된 이슈/개선 포인트
-
-- 타일 강조(`highlightAheadTile`)가 매 프레임 `floors.find(...)`를 수행하므로 맵이 커지면 비용이 증가할 수 있습니다.
-- `R` 재시작은 클리어 상태/이동 잠금 여부와 관계없이 동작하도록 보완했습니다.
-- 골 도착 시에도 목표 타일 강조가 남아 보일 수 있어, UX 관점에서 클리어 시 강조 제거를 추가 검토할 수 있습니다.
-
-## 참고
-
-- 퍼즐 감성 레퍼런스: Monument Valley 류의 고정 시점 탐색 퍼즐

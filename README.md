@@ -42,6 +42,14 @@ npm run preview
 > 기존 `index.html` 기반 import map 직접 실행 방식은 **deprecated** 입니다.
 > 팀 개발/검증은 Vite + npm 스크립트 워크플로우를 기준으로 진행하세요.
 
+## 문서
+
+- [마이그레이션 요약 (KO)](docs/migration-summary-ko.md)
+- [작업 로그 (KO)](docs/worklog-ko.md)
+- [TS + React 전환 이점 (KO)](docs/benefits-ts-react-ko.md)
+- [마이그레이션 계획](docs/migration-plan.md)
+- [컨셉 및 개선 과제](docs/concept.md)
+
 ## TypeScript 마이그레이션 상태
 
 현재 전환 단계는 **2단계(완전 전환) 진행중**이며, strict 적용은 아직 완료되지 않았습니다.
@@ -84,5 +92,8 @@ npm run preview
 - `src/config.ts`: 상수 설정값
 - `src/types/game.ts`: 게임 핵심 타입 정의
 - `src/utils.ts`: easing 유틸
+- `docs/migration-summary-ko.md`: 마이그레이션 Before/After와 파일별 변경 요약
+- `docs/worklog-ko.md`: 주차별 작업/이슈/해결/영향 기록
+- `docs/benefits-ts-react-ko.md`: TS/React 전환 이점 정리
 - `docs/migration-plan.md`: 점진 마이그레이션 단계/완료 기준
 - `docs/concept.md`: 컨셉 및 개선 과제 정리

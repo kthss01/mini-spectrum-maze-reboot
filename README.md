@@ -1,5 +1,7 @@
 # mini-spectrum-maze-reboot
 
+![프로젝트 썸네일](docs/project-thumbnail.svg)
+
 빛의 색을 전환하며 길을 찾는 3D 미로 퍼즐 프로토타입입니다. React + Three.js + Vite로 구성되어 있습니다.
 
 ## 현재 구현 상태
